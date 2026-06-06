@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Documentación de Venta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] p-6">
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <div class="flex justify-between items-center bg-[#161B22] border border-[#30363D] px-6 py-4 rounded-lg shadow-md">
+            <div>
+                <h2 class="text-lg font-bold text-white">Expendiente Digital: <span class="text-emerald-400">{{ venta.nombre_cliente }}</span></h2>
+                <p class="text-xs text-gray-400">Identificación: {{ venta.tipo_doc }} {{ venta.nro_doc }} | Subido por: @{{ venta.vendedor.username }}</p>
+            </div>
+            <a href="/dashboard" class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-4 rounded text-white">← Volver al Dashboard</a>
+        </div>
+
+        <div class="bg-[#161B22] border border-[#30363D] p-6 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div><p class="text-gray-500 font-bold">PRODUCTO FINANCIADO</p><p class="text-sm text-white mt-0.5">{{ venta.producto_financiado }}</p></div>
+            <div><p class="text-gray-500 font-bold">MONTO OPERACIÓN</p><p class="text-sm text-emerald-400 font-bold mt-0.5">${{ "{:,.2f}".format(venta.monto_financiado) }}</p></div>
+            <div><p class="text-gray-500 font-bold">CUOTAS ASIGNADAS</p><p class="text-sm text-white mt-0.5">{{ venta.cantidad_cuotas }} meses</p></div>
+            <div><p class="text-gray-500 font-bold">CIUDAD / TELÉFONO</p><p class="text-sm text-white mt-0.5">{{ venta.ciudad or '—' }} ({{ venta.telefono or '—' }})</p></div>
+        </div>
+
+        <div class="space-y-4">
+            <h3 class="text-xs font-bold text-gray-400 tracking-wider uppercase border-b border-[#30363D] pb-1">DOCUMENTACIÓN ADJUNTADA</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="bg-[#161B22] border border-[#30363D] rounded-lg p-4 space-y-2">
+                    <p class="text-xs font-bold text-gray-300">1. Foto del Documento del Cliente</p>
+                    {% if venta.foto_documento %}
+                        <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] flex justify-center p-2">
+                            <img src="data:image/jpeg;base64,{{ venta.foto_documento }}" class="max-h-[350px] object-contain rounded">
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded">No se adjuntó este archivo soporte.</p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-[#161B22] border border-[#30363D] rounded-lg p-4 space-y-2">
+                    <p class="text-xs font-bold text-gray-300">2. Acta de Entrega</p>
+                    {% if venta.acta_entrega %}
+                        <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] flex justify-center p-2">
+                            <img src="data:image/jpeg;base64,{{ venta.acta_entrega }}" class="max-h-[350px] object-contain rounded">
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded">No se adjuntó este archivo soporte.</p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-[#161B22] border border-[#30363D] rounded-lg p-4 space-y-2">
+                    <p class="text-xs font-bold text-gray-300">3. Foto del Cliente con Producto</p>
+                    {% if venta.foto_cliente_producto %}
+                        <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] flex justify-center p-2">
+                            <img src="data:image/jpeg;base64,{{ venta.foto_cliente_producto }}" class="max-h-[350px] object-contain rounded">
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded">No se adjuntó este archivo soporte.</p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-[#161B22] border border-[#30363D] rounded-lg p-4 space-y-2">
+                    <p class="text-xs font-bold text-gray-300">4. Captura de Aprobación del Crédito</p>
+                    {% if venta.captura_aprobacion %}
+                        <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] flex justify-center p-2">
+                            <img src="data:image/jpeg;base64,{{ venta.captura_aprobacion }}" class="max-h-[350px] object-contain rounded">
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded">No se adjuntó este archivo soporte.</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="bg-[#161B22] border border-[#30363D] rounded-lg p-4 space-y-2 mt-4">
+                <p class="text-xs font-bold text-gray-300">5. Anexos Adicionales / Otros Soportes</p>
+                {% if venta.anexos_adicionales %}
+                    <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] flex justify-center p-4">
+                        <img src="data:image/jpeg;base64,{{ venta.anexos_adicionales }}" class="max-w-full max-h-[500px] object-contain rounded">
+                    </div>
+                {% else %}
+                    <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded">No se registraron documentos anexos adicionales para esta operación.</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
