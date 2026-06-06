@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col justify-between">
+    <div class="h-1 bg-emerald-500"></div>
+    <header class="bg-[#161B22] border-b border-[#30363D] py-4 px-8 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-white">PANEL: <span class="text-xs text-gray-400">@{{ session['username'] }} ({{ session['role'] }})</span></h1>
+        <div class="flex gap-2">
+            {% if session['role'] == 'ADMIN' %}
+                <a href="/admin/usuario" class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-4 rounded text-white">+ Crear Usuario</a>
+                <a href="/admin/pago" class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-4 rounded text-white">+ Registrar Pago</a>
+            {% else %}
+                <a href="/venta/nueva" class="bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 px-4 rounded text-white">+ Cargar Venta</a>
+            {% endif %}
+            <a href="/logout" class="bg-red-700 hover:bg-red-600 text-xs font-bold py-2 px-4 rounded text-white">Salir</a>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto p-6 space-y-6 flex-grow">
+        <!-- Indicadores Financieros -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-[#161B22] border border-[#30363D] p-6 rounded-lg shadow">
+                <p class="text-xs font-bold text-[#8B949E] tracking-wider uppercase">Monto Total Cargado</p>
+                <p class="text-3xl font-extrabold text-white mt-2">${{ "{:,.2f}".format(total_subido) }}</p>
+            </div>
+            <div class="bg-[#161B22] border border-[#30363D] p-6 rounded-lg shadow">
+                <p class="text-xs font-bold text-[#8B949E] tracking-wider uppercase">Monto Total Pagado / Comisiones</p>
+                <p class="text-3xl font-extrabold text-emerald-400 mt-2">${{ "{:,.2f}".format(total_pagado) }}</p>
+            </div>
+        </div>
+
+        <!-- Filtros de Búsqueda y Descarga de Informes -->
+        <div class="bg-[#161B22] border border-[#30363D] p-6 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% if session['role'] == 'ADMIN' %}
+            <form method="GET" action="/dashboard" class="space-y-2">
+                <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Filtrar Vista por Vendedor</label>
+                <div class="flex gap-2">
+                    <select name="vendedor_id" class="bg-[#1C2230] border border-[#30363D] rounded px-3 py-2 text-sm w-full text-white">
+                        <option value="">Todos los vendedores</option>
+                        {% for vend in vendedores %}
+                            <option value="{{ vend.id }}" {% if filtro_vendedor|string == vend.id|string %}selected{% endif %}>{{ vend.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="bg-blue-600 px-4 py-2 text-xs font-bold rounded text-white cursor-pointer">Ver</button>
+                </div>
+            </form>
+            {% endif %}
+
+            <form method="POST" action="/download_report" class="space-y-2">
+                <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Descargar Informe de Ventas (Excel)</label>
+                <input type="hidden" name="vendedor_id_excel" value="{{ filtro_vendedor or '' }}">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="date" name="fecha_desde" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-1 text-xs text-white">
+                    <input type="date" name="fecha_hasta" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-1 text-xs text-white">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 rounded text-white cursor-pointer">Descargar Rango Seleccionado</button>
+            </form>
+        </div>
+
+        <!-- Tabla de Registros Recientes -->
+        <div class="bg-[#161B22] border border-[#30363D] rounded-lg overflow-hidden shadow">
+            <div class="bg-[#212838] px-6 py-3 border-b border-[#30363D] text-xs font-bold text-[#8B949E]">HISTORIAL DE VENTAS REGISTRADAS</div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="bg-[#1C2230] text-xs uppercase text-gray-400 border-b border-[#30363D]">
+                        <tr>
+                            <th class="px-6 py-3">Fecha</th>
+                            <th class="px-6 py-3">Vendedor</th>
+                            <th class="px-6 py-3">Cliente</th>
+                            <th class="px-6 py-3">Producto</th>
+                            <th class="px-6 py-3 text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#30363D]">
+                        {% for venta in ventas %}
+                        <tr class="hover:bg-[#1C2230]">
+                            <td class="px-6 py-4 text-xs">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td class="px-6 py-4 font-medium text-white">{{ venta.vendedor.username }}</td>
+                            <td class="px-6 py-4">{{ venta.nombre_cliente }}</td>
+                            <td class="px-6 py-4 text-xs text-gray-400">{{ venta.producto_financiado }}</td>
+                            <td class="px-6 py-4 text-right font-bold text-emerald-400">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center py-6 text-xs text-gray-500">Ningún registro de ventas coincide con los criterios de búsqueda.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

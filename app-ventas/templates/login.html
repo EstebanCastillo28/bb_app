@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><title>Ingreso al Sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col justify-center items-center px-4">
+    <div class="max-w-md w-full bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl overflow-hidden">
+        <div class="h-1 bg-blue-500"></div>
+        <div class="p-8 space-y-6">
+            <h2 class="text-2xl font-bold text-center text-white tracking-tight">SISTEMA DE CONTROL</h2>
+            {% with messages = get_flashed_messages() %}{% if messages %}
+                <div class="bg-red-950/40 border border-red-800 text-red-400 p-3 rounded text-xs text-center">{{ messages[0] }}</div>
+            {% endif %}{% endwith %}
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-[#8B949E] uppercase tracking-wider mb-2">Usuario</label>
+                    <input type="text" name="username" required class="w-full bg-[#1C2230] border border-[#30363D] rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-[#8B949E] uppercase tracking-wider mb-2">Contraseña</label>
+                    <input type="password" name="password" required class="w-full bg-[#1C2230] border border-[#30363D] rounded px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-3 rounded transition duration-150 cursor-pointer">ENTRAR AL SISTEMA</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
