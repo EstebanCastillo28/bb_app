@@ -1,18 +1,16 @@
 import os
 import io
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-# Inicialización de Flask adaptada para la carpeta /api de Vercel
-app = Flask(__name__, template_folder='../templates')
+app = Flask(__name__, template_folder=os.path.abspath('templates'))
 app.secret_key = "vanti_sales_ultra_secure_key"
 
-# Configuración dinámica de la Base de Datos (Soporta SQLite local y Neon Postgres en Vercel)
 DATABASE_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -31,12 +29,13 @@ class Usuario(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # 'ADMIN' o 'VENDEDOR'
-    ventas = db.relationship('Venta', backref='vendedor', lazy=True)
-    pagos = db.relationship('Pago', backref='vendedor', lazy=True)
+    ventas = db.relationship('Venta', backref='vendedor', lazy=True, cascade="all, delete-orphan")
+    pagos = db.relationship('Pago', backref='vendedor', lazy=True, cascade="all, delete-orphan")
 
 class Venta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    estado = db.Column(db.String(30), default="PENDIENTE")  # 'PENDIENTE', 'REVISADO', 'NO INGRESO'
     
     # Datos del Cliente
     nombre_cliente = db.Column(db.String(150), nullable=False)
@@ -47,13 +46,13 @@ class Venta(db.Model):
     direccion = db.Column(db.String(200))
     ciudad = db.Column(db.String(100))
     
-    # Datos Financieros y Operación
+    # Datos Financieros
     monto_financiado = db.Column(db.Float, nullable=False)
     cantidad_cuotas = db.Column(db.Integer, nullable=False)
     producto_financiado = db.Column(db.String(150), nullable=False)
     observaciones = db.Column(db.Text)
     
-    # Archivos Adjuntos guardados en formato de Texto (Base64)
+    # Archivos Adjuntos (Base64)
     foto_documento = db.Column(db.Text)
     acta_entrega = db.Column(db.Text)
     foto_cliente_producto = db.Column(db.Text)
@@ -70,7 +69,6 @@ class Pago(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
 
-# Inicialización automatizada de Tablas y Usuario Administrador Maestro
 with app.app_context():
     db.create_all()
     if not Usuario.query.filter_by(username="admin").first():
@@ -84,14 +82,13 @@ with app.app_context():
 # ──────────────────────────────────────────────
 
 def procesar_archivo(file_field):
-    """Lee el archivo binario del formulario y lo convierte a string Base64"""
     file = request.files.get(file_field)
     if file and file.filename != '':
         return base64.b64encode(file.read()).decode('utf-8')
     return ""
 
 # ──────────────────────────────────────────────
-#  RUTAS DE LA APLICACIÓN (CONTROLADORES)
+#  RUTAS DE LA APLICACIÓN
 # ──────────────────────────────────────────────
 
 @app.route("/", methods=["GET", "POST"])
@@ -117,13 +114,11 @@ def logout():
 
 @app.route("/dashboard")
 def dashboard():
-    if "user_id" not in session: 
-        return redirect(url_for("login"))
+    if "user_id" not in session: return redirect(url_for("login"))
     
     vendedores = Usuario.query.filter_by(role="VENDEDOR").all() if session["role"] == "ADMIN" else []
     filtro_vendedor = request.args.get("vendedor_id")
     
-    # Lógica de filtrado estructural según el Rol de Usuario
     if session["role"] == "ADMIN":
         if filtro_vendedor:
             ventas_query = Venta.query.filter_by(usuario_id=filtro_vendedor)
@@ -137,7 +132,8 @@ def dashboard():
         
     ventas = ventas_query.order_by(Venta.fecha.desc()).all()
     
-    total_subido = sum(v.monto_financiado for v in ventas)
+    # CRÍTICO: Modificación matemática para ignorar 'NO INGRESO' en la sumatoria total
+    total_subido = sum(v.monto_financiado for v in ventas if v.estado != "NO INGRESO")
     total_pagado = sum(p.monto for p in pagos_query.all())
     
     return render_template("dashboard.html", ventas=ventas, total_subido=total_subido, 
@@ -145,8 +141,7 @@ def dashboard():
 
 @app.route("/venta/nueva", methods=["GET", "POST"])
 def nueva_venta():
-    if "user_id" not in session: 
-        return redirect(url_for("login"))
+    if "user_id" not in session: return redirect(url_for("login"))
     
     if request.method == "POST":
         try:
@@ -159,11 +154,11 @@ def nueva_venta():
                 direccion=request.form.get("direccion"),
                 ciudad=request.form.get("ciudad"),
                 monto_financiado=float(request.form.get("monto_financiado")),
-                amount_cuotas=int(request.form.get("cantidad_cuotas")),
+                cantidad_cuotas=int(request.form.get("cantidad_cuotas")),
                 producto_financiado=request.form.get("producto_financiado"),
                 observaciones=request.form.get("observaciones"),
+                estado="PENDIENTE",
                 
-                # Procesamiento de imágenes a Base64 directo a celdas de la BD
                 foto_documento=procesar_archivo("foto_documento"),
                 acta_entrega=procesar_archivo("acta_entrega"),
                 foto_cliente_producto=procesar_archivo("foto_cliente_producto"),
@@ -181,10 +176,56 @@ def nueva_venta():
             
     return render_template("nueva_venta.html")
 
+# NUEVA RUTA: Permite revisar toda la documentación e imágenes en pantalla sin descargar
+@app.route("/venta/<int:id>")
+def detalle_venta(id):
+    if "user_id" not in session: return redirect(url_for("login"))
+    venta = Venta.query.get_or_404(id)
+    
+    # Resguardo de seguridad: un vendedor no puede husmear ventas ajenas
+    if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
+        flash("Acceso denegado.", "error")
+        return redirect(url_for("dashboard"))
+        
+    return render_template("detalle_venta.html", venta=venta)
+
+# NUEVA RUTA: Permite al Administrador gestionar etiquetas de estado
+@app.route("/venta/<int:id>/estado", methods=["POST"])
+def cambiar_estado(id):
+    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
+    venta = Venta.query.get_or_404(id)
+    nuevo_estado = request.form.get("estado")
+    
+    if nuevo_estado in ["PENDIENTE", "REVISADO", "NO INGRESO"]:
+        venta.estado = nuevo_estado
+        db.session.commit()
+        flash(f"Estado de la venta actualizado a {nuevo_estado}.", "success")
+    return redirect(url_for("dashboard"))
+
+# NUEVA RUTA: Permite borrar registros completamente de la Base de Datos
+@app.route("/venta/<int:id>/eliminar", methods=["POST"])
+def eliminar_venta(id):
+    if "user_id" not in session: return redirect(url_for("login"))
+    venta = Venta.query.get_or_404(id)
+    
+    # Seguridad: Solo el dueño de la venta o el administrador pueden eliminarla
+    if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
+        flash("No tienes autorización para eliminar esta venta.", "error")
+        return redirect(url_for("dashboard"))
+        
+    try:
+        db.session.delete(venta)
+        db.session.commit()
+        flash("Venta eliminada permanentemente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar registro: {str(e)}", "error")
+        
+    return redirect(url_for("dashboard"))
+
 @app.route("/admin/usuario", methods=["GET", "POST"])
 def crear_usuario():
-    if "user_id" not in session or session["role"] != "ADMIN": 
-        return redirect(url_for("login"))
+    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
     
     if request.method == "POST":
         username = request.form.get("username").strip()
@@ -204,8 +245,7 @@ def crear_usuario():
 
 @app.route("/admin/pago", methods=["GET", "POST"])
 def registrar_pago():
-    if "user_id" not in session or session["role"] != "ADMIN": 
-        return redirect(url_for("login"))
+    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
     
     vendedores = Usuario.query.filter_by(role="VENDEDOR").all()
     if request.method == "POST":
@@ -223,8 +263,7 @@ def registrar_pago():
 
 @app.route("/download_report", methods=["POST"])
 def download_report():
-    if "user_id" not in session: 
-        return redirect(url_for("login"))
+    if "user_id" not in session: return redirect(url_for("login"))
     
     fecha_desde_str = request.form.get("fecha_desde")
     fecha_hasta_str = request.form.get("fecha_hasta")
@@ -232,11 +271,9 @@ def download_report():
     
     query = Venta.query
     
-    # Filtros de rango de fechas para el informe
     if fecha_desde_str:
         query = query.filter(Venta.fecha >= datetime.strptime(fecha_desde_str, "%Y-%m-%d"))
     if fecha_hasta_str:
-        # Se suma 1 día al límite superior para incluir las ventas de todo el último día seleccionado
         limit_hasta = datetime.strptime(fecha_hasta_str, "%Y-%m-%d") + timedelta(days=1)
         query = query.filter(Venta.fecha < limit_hasta)
         
@@ -248,7 +285,6 @@ def download_report():
         
     ventas = query.order_by(Venta.fecha.asc()).all()
     
-    # Generación del archivo estructurado con Openpyxl
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Reporte de Ventas"
@@ -259,21 +295,21 @@ def download_report():
     al = Alignment(horizontal="left",   vertical="center", wrap_text=True)
     borde = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
     
-    headers = ["FECHA", "VENDEDOR", "CLIENTE", "TIPO DOC", "NRO DOC", "CORREO", "TELEFONO", "CIUDAD", "MONTO FINANCIADO", "CUOTAS", "PRODUCTO"]
-    anchos = [14, 15, 25, 12, 15, 20, 15, 15, 18, 10, 20]
+    headers = ["FECHA", "ESTADO", "VENDEDOR", "CLIENTE", "TIPO DOC", "NRO DOC", "MONTO FINANCIADO", "CUOTAS", "PRODUCTO"]
+    anchos = [14, 15, 15, 25, 12, 15, 18, 10, 20]
     
     for i, (col, ancho) in enumerate(zip(headers, anchos), start=1):
         c = ws.cell(row=1, column=i, value=col)
         c.font = font_h
-        c.fill = PatternFill("solid", start_color="1F2937")  # Gris oscuro ejecutivo
+        c.fill = PatternFill("solid", start_color="1F2937")
         c.alignment = ac
         c.border = borde
         ws.column_dimensions[c.column_letter].width = ancho
         
     for fi, v in enumerate(ventas, start=2):
         fila_datos = [
-            v.fecha.strftime("%d/%m/%Y"), v.vendedor.username, v.nombre_cliente, v.tipo_doc,
-            v.nro_doc, v.correo, v.telefono, v.ciudad, v.monto_financiado, v.cantidad_cuotas, v.producto_financiado
+            v.fecha.strftime("%d/%m/%Y"), v.estado, v.vendedor.username, v.nombre_cliente, v.tipo_doc,
+            v.nro_doc, v.monto_financiado, v.cantidad_cuotas, v.producto_financiado
         ]
         color = "F9FAFB" if fi % 2 == 0 else "FFFFFF"
         for ci, val in enumerate(fila_datos, start=1):
@@ -281,9 +317,8 @@ def download_report():
             c.font = font_d
             c.fill = PatternFill("solid", start_color=color)
             c.border = borde
-            c.alignment = ac if ci in [1, 4, 5, 7, 10] else al
-            if ci == 9: 
-                c.number_format = '$#,##0.00'
+            c.alignment = ac if ci in [1, 2, 5, 6, 8] else al
+            if ci == 7: c.number_format = '$#,##0.00'
             
     excel_stream = io.BytesIO()
     wb.save(excel_stream)
@@ -291,7 +326,3 @@ def download_report():
     
     return send_file(excel_stream, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      as_attachment=True, download_name=f"Reporte_Ventas_{datetime.now().strftime('%Y%m%d')}.xlsx")
-
-# Requerido por la infraestructura WSGI de Vercel
-def handler(request, start_response):
-    return app(request, start_response)
