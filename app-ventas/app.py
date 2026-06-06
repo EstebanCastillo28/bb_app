@@ -1,17 +1,18 @@
 import os
 import io
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-app = Flask(__name__)
+# Inicialización limpia de Flask usando rutas absolutas para los templates
+app = Flask(__name__, template_folder=os.path.abspath('templates'))
 app.secret_key = "vanti_sales_ultra_secure_key"
 
-# Configuración de base de datos dinámica (Soporta Local SQLite y Vercel Postgres)
+# Configuración dinámica de la Base de Datos (Soporta SQLite local y Neon Postgres en Vercel)
 DATABASE_URL = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -29,7 +30,7 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False) # 'ADMIN' o 'VENDEDOR'
+    role = db.Column(db.String(20), nullable=False)  # 'ADMIN' o 'VENDEDOR'
     ventas = db.relationship('Venta', backref='vendedor', lazy=True)
     pagos = db.relationship('Pago', backref='vendedor', lazy=True)
 
@@ -46,13 +47,13 @@ class Venta(db.Model):
     direccion = db.Column(db.String(200))
     ciudad = db.Column(db.String(100))
     
-    # Datos Financieros
+    # Datos Financieros y Operación
     monto_financiado = db.Column(db.Float, nullable=False)
     cantidad_cuotas = db.Column(db.Integer, nullable=False)
     producto_financiado = db.Column(db.String(150), nullable=False)
     observaciones = db.Column(db.Text)
     
-    # Archivos adjuntos en Base64
+    # Archivos Adjuntos guardados en formato de Texto (Base64)
     foto_documento = db.Column(db.Text)
     acta_entrega = db.Column(db.Text)
     foto_cliente_producto = db.Column(db.Text)
@@ -69,7 +70,7 @@ class Pago(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
 
-# Crear las tablas e inicializar un administrador por defecto si la BD está vacía
+# Inicialización automatizada de Tablas y Usuario Administrador Maestro
 with app.app_context():
     db.create_all()
     if not Usuario.query.filter_by(username="admin").first():
@@ -79,14 +80,19 @@ with app.app_context():
         db.session.commit()
 
 # ──────────────────────────────────────────────
-#  CONTROLADORES Y RUTAS
+#  FUNCIONES AUXILIARES
 # ──────────────────────────────────────────────
 
 def procesar_archivo(file_field):
+    """Lee el archivo binario del formulario y lo convierte a string Base64"""
     file = request.files.get(file_field)
     if file and file.filename != '':
         return base64.b64encode(file.read()).decode('utf-8')
     return ""
+
+# ──────────────────────────────────────────────
+#  RUTAS DE LA APLICACIÓN (CONTROLADORES)
+# ──────────────────────────────────────────────
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -111,11 +117,10 @@ def logout():
 
 @app.route("/dashboard")
 def dashboard():
-    if "user_id" not in session: return redirect(url_for("login"))
+    if "user_id" not in session: 
+        return redirect(url_for("login"))
     
     vendedores = Usuario.query.filter_by(role="VENDEDOR").all() if session["role"] == "ADMIN" else []
-    
-    # Filtrado por Admin
     filtro_vendedor = request.args.get("vendedor_id")
     
     if session["role"] == "ADMIN":
@@ -126,7 +131,6 @@ def dashboard():
             ventas_query = Venta.query
             pagos_query = Pago.query
     else:
-        # El vendedor solo ve lo suyo
         ventas_query = Venta.query.filter_by(usuario_id=session["user_id"])
         pagos_query = Pago.query.filter_by(usuario_id=session["user_id"])
         
@@ -140,7 +144,8 @@ def dashboard():
 
 @app.route("/venta/nueva", methods=["GET", "POST"])
 def nueva_venta():
-    if "user_id" not in session: return redirect(url_for("login"))
+    if "user_id" not in session: 
+        return redirect(url_for("login"))
     
     if request.method == "POST":
         try:
@@ -154,10 +159,10 @@ def nueva_venta():
                 ciudad=request.form.get("ciudad"),
                 monto_financiado=float(request.form.get("monto_financiado")),
                 cantidad_cuotas=int(request.form.get("cantidad_cuotas")),
-                producto_financiado=request.form.get("producto_financiado")),
+                producto_financiado=request.form.get("producto_financiado"),
                 observaciones=request.form.get("observaciones"),
                 
-                # Conversión de adjuntos a Base64
+                # Procesamiento de imágenes corregido
                 foto_documento=procesar_archivo("foto_documento"),
                 acta_entrega=procesar_archivo("acta_entrega"),
                 foto_cliente_producto=procesar_archivo("foto_cliente_producto"),
@@ -177,7 +182,8 @@ def nueva_venta():
 
 @app.route("/admin/usuario", methods=["GET", "POST"])
 def crear_usuario():
-    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
+    if "user_id" not in session or session["role"] != "ADMIN": 
+        return redirect(url_for("login"))
     
     if request.method == "POST":
         username = request.form.get("username").strip()
@@ -190,14 +196,15 @@ def crear_usuario():
             user = Usuario(username=username, password=generate_password_hash(password), role=role)
             db.session.add(user)
             db.session.commit()
-            flash(f"Usuario {username} creado con éxito.", "success")
+            flash(f"Usuario @{username} creado con éxito.", "success")
             return redirect(url_for("dashboard"))
             
     return render_template("nuevo_usuario.html")
 
 @app.route("/admin/pago", methods=["GET", "POST"])
 def registrar_pago():
-    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
+    if "user_id" not in session or session["role"] != "ADMIN": 
+        return redirect(url_for("login"))
     
     vendedores = Usuario.query.filter_by(role="VENDEDOR").all()
     if request.method == "POST":
@@ -215,7 +222,8 @@ def registrar_pago():
 
 @app.route("/download_report", methods=["POST"])
 def download_report():
-    if "user_id" not in session: return redirect(url_for("login"))
+    if "user_id" not in session: 
+        return redirect(url_for("login"))
     
     fecha_desde_str = request.form.get("fecha_desde")
     fecha_hasta_str = request.form.get("fecha_hasta")
@@ -226,7 +234,8 @@ def download_report():
     if fecha_desde_str:
         query = query.filter(Venta.fecha >= datetime.strptime(fecha_desde_str, "%Y-%m-%d"))
     if fecha_hasta_str:
-        query = query.filter(Venta.fecha <= datetime.strptime(fecha_hasta_str, "%Y-%m-%d"))
+        limit_hasta = datetime.strptime(fecha_hasta_str, "%Y-%m-%d") + timedelta(days=1)
+        query = query.filter(Venta.fecha < limit_hasta)
         
     if session["role"] == "ADMIN":
         if vendedor_filtro:
@@ -236,7 +245,6 @@ def download_report():
         
     ventas = query.order_by(Venta.fecha.asc()).all()
     
-    # Generación Estilizada del Libro Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Reporte de Ventas"
@@ -253,7 +261,7 @@ def download_report():
     for i, (col, ancho) in enumerate(zip(headers, anchos), start=1):
         c = ws.cell(row=1, column=i, value=col)
         c.font = font_h
-        c.fill = PatternFill("solid", start_color="1F2937") # Gris oscuro premium
+        c.fill = PatternFill("solid", start_color="1F2937")
         c.alignment = ac
         c.border = borde
         ws.column_dimensions[c.column_letter].width = ancho
@@ -270,7 +278,8 @@ def download_report():
             c.fill = PatternFill("solid", start_color=color)
             c.border = borde
             c.alignment = ac if ci in [1, 4, 5, 7, 10] else al
-            if ci == 9: c.number_format = '$#,##0.00'
+            if ci == 9: 
+                c.number_format = '$#,##0.00'
             
     excel_stream = io.BytesIO()
     wb.save(excel_stream)
@@ -278,6 +287,3 @@ def download_report():
     
     return send_file(excel_stream, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      as_attachment=True, download_name=f"Reporte_Ventas_{datetime.now().strftime('%Y%m%d')}.xlsx")
-
-if __name__ == "__main__":
-    app.run(debug=True)
