@@ -20,8 +20,13 @@
     </header>
 
     <main class="max-w-7xl w-full mx-auto p-6 space-y-6 flex-grow">
-        {% with messages = get_flashed_messages() %}{% if messages %}
-            <div class="p-3 text-xs rounded border bg-emerald-950/40 text-emerald-400 border-emerald-800 text-center">{{ messages[0] }}</div>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="p-3 text-xs rounded border bg-emerald-950/40 text-emerald-400 border-emerald-800 text-center mb-4">
+                {{ messages[0] }}
+            </div>
+          {% endif %}
         {% endwith %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -106,6 +111,8 @@
                                 </form>
                             </td>
                         </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center py-6 text-xs text-gray-500">No hay ventas registradas.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -130,19 +137,19 @@
                         <tr class="hover:bg-[#1C2230]">
                             <td class="px-6 py-4 text-xs">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
                             <td class="px-6 py-4 font-medium text-white">@{{ pago.vendedor.username }}</td>
-                            <td class="px-6 py-4 text-xs text-gray-400 max-w-xs truncate">{{ pago.observaciones or 'Sin observaciones registradas.' }}</td>
+                            <td class="px-6 py-4 text-xs text-gray-400 max-w-xs truncate">{{ pago.observaciones or 'Sin observaciones.' }}</td>
                             <td class="px-6 py-4 text-right font-bold text-emerald-400">${{ "{:,.2f}".format(pago.monto) }}</td>
                             <td class="px-6 py-4 text-xs flex items-center justify-center gap-2">
                                 <a href="/pago/{{ pago.id }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-1 px-3 rounded font-bold">📄 Ver Recibo</a>
                                 {% if session['role'] == 'ADMIN' %}
-                                <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir y eliminar este pago permanentemente?');" class="inline">
+                                <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir este pago?');" class="inline">
                                     <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-1 px-2 rounded">🗑 Revertir</button>
                                 </form>
                                 {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados en este período.</td></tr>
+                        <tr><td colspan="5" class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
