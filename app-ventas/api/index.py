@@ -66,19 +66,23 @@ class Pago(db.Model):
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     monto = db.Column(db.Float, nullable=False)
     observaciones = db.Column(db.Text)
+    comprobante = db.Column(db.Text)  # Soporte de archivo para el abono
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
 
-# Inicialización y parches automáticos de esquema
 with app.app_context():
     db.create_all()
     
-    # ⚡ PARCHE DE MIGRACIÓN SEGURO: Inyecta la columna 'estado' si la BD ya existía previamente
+    # Parches automáticos para actualizar bases de datos existentes sin romper producción
     try:
         db.session.execute(db.text("ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'"))
         db.session.commit()
-    except Exception:
-        db.session.rollback()  # Si la columna ya existe, el error se captura y se ignora limpiamente
+    except Exception: db.session.rollback()
+        
+    try:
+        db.session.execute(db.text("ALTER TABLE pago ADD COLUMN comprobante TEXT"))
+        db.session.commit()
+    except Exception: db.session.rollback()
         
     if not Usuario.query.filter_by(username="admin").first():
         hashed_pw = generate_password_hash("admin123")
@@ -97,7 +101,7 @@ def procesar_archivo(file_field):
     return ""
 
 # ──────────────────────────────────────────────
-#  RUTAS DE LA APLICACIÓN
+#  RUTAS OPERATIVAS
 # ──────────────────────────────────────────────
 
 @app.route("/", methods=["GET", "POST"])
@@ -140,11 +144,12 @@ def dashboard():
         pagos_query = Pago.query.filter_by(usuario_id=session["user_id"])
         
     ventas = ventas_query.order_by(Venta.fecha.desc()).all()
+    pagos = pagos_query.order_by(Pago.fecha.desc()).all()
     
     total_subido = sum(v.monto_financiado for v in ventas if v.estado != "NO INGRESO")
-    total_pagado = sum(p.monto for p in pagos_query.all())
+    total_pagado = sum(p.monto for p in pagos)
     
-    return render_template("dashboard.html", ventas=ventas, total_subido=total_subido, 
+    return render_template("dashboard.html", ventas=ventas, pagos=pagos, total_subido=total_subido, 
                            total_pagado=total_pagado, vendedores=vendedores, filtro_vendedor=filtro_vendedor)
 
 @app.route("/venta/nueva", methods=["GET", "POST"])
@@ -195,6 +200,18 @@ def detalle_venta(id):
         
     return render_template("detalle_venta.html", venta=venta)
 
+# NUEVA RUTA: Permite revisar soportes digitales de un pago específico de forma segura
+@app.route("/pago/<int:id>")
+def detalle_pago(id):
+    if "user_id" not in session: return redirect(url_for("login"))
+    pago = Pago.query.get_or_404(id)
+    
+    if session["role"] != "ADMIN" and pago.usuario_id != session["user_id"]:
+        flash("Acceso denegado a este comprobante.", "error")
+        return redirect(url_for("dashboard"))
+        
+    return render_template("detalle_pago.html", pago=pago)
+
 @app.route("/venta/<int:id>/estado", methods=["POST"])
 def cambiar_estado(id):
     if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
@@ -226,6 +243,20 @@ def eliminar_venta(id):
         
     return redirect(url_for("dashboard"))
 
+# NUEVA RUTA: Permite al Administrador borrar un abono mal ingresado
+@app.route("/pago/<int:id>/eliminar", methods=["POST"])
+def eliminar_pago(id):
+    if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
+    pago = Pago.query.get_or_404(id)
+    try:
+        db.session.delete(pago)
+        db.session.commit()
+        flash("Registro de pago eliminado con éxito.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar el pago: {str(e)}", "error")
+    return redirect(url_for("dashboard"))
+
 @app.route("/admin/usuario", methods=["GET", "POST"])
 def crear_usuario():
     if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
@@ -255,6 +286,7 @@ def registrar_pago():
         pago = Pago(
             monto=float(request.form.get("monto")),
             observaciones=request.form.get("observaciones"),
+            comprobante=procesar_archivo("comprobante"), # Captura el archivo soporte del pago
             usuario_id=int(request.form.get("vendedor_id"))
         )
         db.session.add(pago)
