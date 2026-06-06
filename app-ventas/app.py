@@ -69,8 +69,17 @@ class Pago(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
 
+# Inicialización y parches automáticos de esquema
 with app.app_context():
     db.create_all()
+    
+    # ⚡ PARCHE DE MIGRACIÓN SEGURO: Inyecta la columna 'estado' si la BD ya existía previamente
+    try:
+        db.session.execute(db.text("ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()  # Si la columna ya existe, el error se captura y se ignora limpiamente
+        
     if not Usuario.query.filter_by(username="admin").first():
         hashed_pw = generate_password_hash("admin123")
         admin_default = Usuario(username="admin", password=hashed_pw, role="ADMIN")
@@ -132,7 +141,6 @@ def dashboard():
         
     ventas = ventas_query.order_by(Venta.fecha.desc()).all()
     
-    # CRÍTICO: Modificación matemática para ignorar 'NO INGRESO' en la sumatoria total
     total_subido = sum(v.monto_financiado for v in ventas if v.estado != "NO INGRESO")
     total_pagado = sum(p.monto for p in pagos_query.all())
     
@@ -176,20 +184,17 @@ def nueva_venta():
             
     return render_template("nueva_venta.html")
 
-# NUEVA RUTA: Permite revisar toda la documentación e imágenes en pantalla sin descargar
 @app.route("/venta/<int:id>")
 def detalle_venta(id):
     if "user_id" not in session: return redirect(url_for("login"))
     venta = Venta.query.get_or_404(id)
     
-    # Resguardo de seguridad: un vendedor no puede husmear ventas ajenas
     if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
         flash("Acceso denegado.", "error")
         return redirect(url_for("dashboard"))
         
     return render_template("detalle_venta.html", venta=venta)
 
-# NUEVA RUTA: Permite al Administrador gestionar etiquetas de estado
 @app.route("/venta/<int:id>/estado", methods=["POST"])
 def cambiar_estado(id):
     if "user_id" not in session or session["role"] != "ADMIN": return redirect(url_for("login"))
@@ -202,13 +207,11 @@ def cambiar_estado(id):
         flash(f"Estado de la venta actualizado a {nuevo_estado}.", "success")
     return redirect(url_for("dashboard"))
 
-# NUEVA RUTA: Permite borrar registros completamente de la Base de Datos
 @app.route("/venta/<int:id>/eliminar", methods=["POST"])
 def eliminar_venta(id):
     if "user_id" not in session: return redirect(url_for("login"))
     venta = Venta.query.get_or_404(id)
     
-    # Seguridad: Solo el dueño de la venta o el administrador pueden eliminarla
     if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
         flash("No tienes autorización para eliminar esta venta.", "error")
         return redirect(url_for("dashboard"))
