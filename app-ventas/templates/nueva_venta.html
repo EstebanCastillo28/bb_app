@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Venta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] pb-24">
+  <div class="sticky top-0 z-10 bg-[#161B22] border-b border-[#30363D] px-4 py-3 flex justify-between items-center shadow-lg">
+    <h2 class="text-sm font-bold text-white">REGISTRO DE VENTA</h2>
+    <a href="/dashboard" class="text-xs text-gray-400 hover:text-white py-1 px-2">← Volver</a>
+  </div>
+  <div class="max-w-2xl mx-auto px-4 py-4">
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">Información del Cliente</h3>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">Nombre Completo *</label>
+          <input type="text" name="nombre_cliente" required
+            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Tipo Doc</label>
+            <select name="tipo_doc" class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              <option>C.C.</option><option>C.E.</option><option>NIT</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Número Documento *</label>
+            <input type="text" name="nro_doc" required
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Correo</label>
+            <input type="email" name="correo"
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Teléfono</label>
+            <input type="tel" name="telefono"
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Ciudad</label>
+            <input type="text" name="ciudad"
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Dirección Completa</label>
+            <input type="text" name="direccion"
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">Datos de la Operación</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Monto Financiado *</label>
+            <input type="number" step="0.01" name="monto_financiado" required
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-400 mb-1">Número de Cuotas *</label>
+            <input type="number" name="cantidad_cuotas" required
+              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">Producto Adquirido *</label>
+          <input type="text" name="producto_financiado" required
+            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">Observaciones</label>
+          <textarea name="observaciones" rows="3"
+            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">
+          Soportes Digitales <span class="text-gray-500 normal-case">(Máx. 4.5MB combinados)</span>
+        </h3>
+        <div class="space-y-2">
+          {% set archivos = [
+            ('foto_documento', 'Foto Documento Cliente'),
+            ('acta_entrega', 'Acta de Entrega Firmada'),
+            ('foto_cliente_producto', 'Foto del Cliente con el Producto'),
+            ('captura_aprobacion', 'Captura Aprobación Crédito'),
+            ('anexos_adicionales', 'Anexos Adicionales')
+          ] %}
+          {% for name, label in archivos %}
+          <div class="bg-[#1C2230] border border-[#30363D] rounded p-3">
+            <label class="block text-[10px] text-gray-400 mb-2">{{ label }}</label>
+            <input type="file" name="{{ name }}" accept="image/*,application/pdf" class="w-full text-gray-400 text-xs">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="fixed bottom-0 left-0 right-0 p-4 bg-[#0D1117] border-t border-[#30363D] sm:static sm:p-0 sm:bg-transparent sm:border-0">
+        <button type="submit"
+          class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-sm font-bold py-3 rounded cursor-pointer">
+          GUARDAR REGISTRO DE VENTA
+        </button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col">
+  <div class="h-1 bg-emerald-500"></div>
+
+  <header class="bg-[#161B22] border-b border-[#30363D] py-3 px-4 sm:px-8">
+    <div class="flex justify-between items-center gap-2">
+      <h1 class="text-base sm:text-xl font-bold text-white whitespace-nowrap">
+        PANEL <span class="text-xs text-gray-400 font-normal">{{ session.username }}</span>
+      </h1>
+      <div class="flex gap-2 overflow-x-auto flex-shrink-0" style="-webkit-overflow-scrolling:touch;">
+        {% if session.role == 'ADMIN' %}
+          <a href="/admin/usuario" class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Usuario</a>
+          <a href="/admin/pago"    class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Pago</a>
+        {% else %}
+          <a href="/venta/nueva"   class="bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Venta</a>
+        {% endif %}
+        <a href="/logout" class="bg-red-700 hover:bg-red-600 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">Salir</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 flex-grow">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="p-3 text-xs rounded border bg-emerald-950/40 text-emerald-400 border-emerald-800 text-center">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- KPIs -->
+    <div class="grid {% if session.role == 'ADMIN' %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-4">
+      {% if session.role == 'ADMIN' %}
+      <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg shadow">
+        <p class="text-[10px] font-bold text-[#8B949E] tracking-wider uppercase">Monto Total Aprobado Global</p>
+        <p class="text-xl sm:text-3xl font-extrabold text-white mt-1">${{ "{:,.2f}".format(total_subido) }}</p>
+      </div>
+      {% endif %}
+      <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg shadow">
+        <p class="text-[10px] font-bold text-[#8B949E] tracking-wider uppercase">
+          {% if session.role == 'ADMIN' %}Monto Pagado a Vendedores{% else %}Mis Comisiones Recibidas / Pagadas{% endif %}
+        </p>
+        <p class="text-xl sm:text-3xl font-extrabold text-emerald-400 mt-1">${{ "{:,.2f}".format(total_pagado) }}</p>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
+      {% if session.role == 'ADMIN' %}
+      <form method="GET" action="/dashboard" class="space-y-2">
+        <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Filtrar por Vendedor</label>
+        <div class="flex gap-2">
+          <select name="vendedorid" class="bg-[#1C2230] border border-[#30363D] rounded px-3 py-2 text-sm w-full text-white">
+            <option value="">Todos los vendedores</option>
+            {% for vend in vendedores %}
+              <option value="{{ vend.id }}" {% if filtro_vendedor == vend.id|string %}selected{% endif %}>{{ vend.username }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="bg-blue-600 px-4 py-2 text-xs font-bold rounded text-white cursor-pointer whitespace-nowrap">Ver</button>
+        </div>
+      </form>
+      {% endif %}
+      <form method="POST" action="/download-report" class="space-y-2">
+        <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Descargar Informe Excel</label>
+        <input type="hidden" name="vendedoridexcel" value="{{ filtro_vendedor or '' }}">
+        <div class="grid grid-cols-2 gap-2">
+          <input type="date" name="fechadesde" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-2 text-xs text-white w-full">
+          <input type="date" name="fechahasta" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-2 text-xs text-white w-full">
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 rounded text-white cursor-pointer">
+          Descargar Rango Seleccionado
+        </button>
+      </form>
+    </div>
+
+    <!-- VENTAS -->
+    <div class="bg-[#161B22] border border-[#30363D] rounded-lg overflow-hidden shadow">
+      <div class="bg-[#212838] px-4 py-3 border-b border-[#30363D] text-xs font-bold text-[#8B949E] uppercase">Historial General de Ventas</div>
+
+      <!-- Escritorio -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-300">
+          <thead class="bg-[#1C2230] text-xs uppercase text-gray-400 border-b border-[#30363D]">
+            <tr>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3">Estado</th>
+              <th class="px-4 py-3">Vendedor</th>
+              <th class="px-4 py-3">Cliente</th>
+              <th class="px-4 py-3">Monto</th>
+              <th class="px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#30363D]">
+            {% for venta in ventas %}
+            <tr class="hover:bg-[#1C2230] {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
+              <td class="px-4 py-4 text-xs">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="px-4 py-4 text-xs">
+                <span class="px-2 py-0.5 rounded text-xs font-bold border
+                  {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
+                  {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
+                  {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+              </td>
+              <td class="px-4 py-4 font-medium text-white">{{ venta.vendedor.username }}</td>
+              <td class="px-4 py-4 max-w-[150px] truncate">{{ venta.nombre_cliente }}</td>
+              <td class="px-4 py-4 font-bold text-gray-100">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
+              <td class="px-4 py-4 text-xs">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <a href="/venta/{{ venta.id }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-1 px-3 rounded whitespace-nowrap">Ver</a>
+                  {% if session.role == 'ADMIN' %}
+                  <form action="/venta/{{ venta.id }}/estado" method="POST" class="inline">
+                    <select name="estado" onchange="this.form.submit()"
+                      class="bg-[#161B22] border border-[#30363D] rounded text-white text-xs px-1 py-1 focus:outline-none">
+                      <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                      <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
+                      <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
+                    </select>
+                  </form>
+                  <form action="/venta/{{ venta.id }}/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta venta?')" class="inline">
+                    <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-1 px-2 rounded">Borrar</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center py-6 text-xs text-gray-500">No hay ventas registradas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Móvil cards ventas -->
+      <div class="sm:hidden divide-y divide-[#30363D]">
+        {% for venta in ventas %}
+        <div class="p-4 space-y-3 {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
+          <div class="flex justify-between items-start gap-2">
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-white truncate">{{ venta.nombre_cliente }}</p>
+              <p class="text-[10px] text-gray-400">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-bold border whitespace-nowrap
+              {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
+              {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
+              {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+          </div>
+          <p class="text-lg font-extrabold text-emerald-400">${{ "{:,.2f}".format(venta.monto_financiado) }}</p>
+          <div class="flex gap-2 flex-wrap">
+            <a href="/venta/{{ venta.id }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded text-xs">Ver adjuntos</a>
+            {% if session.role == 'ADMIN' %}
+            <form action="/venta/{{ venta.id }}/estado" method="POST" class="flex-1 min-w-0">
+              <select name="estado" onchange="this.form.submit()"
+                class="w-full bg-[#161B22] border border-[#30363D] rounded text-white text-xs px-2 py-2 focus:outline-none">
+                <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
+                <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
+              </select>
+            </form>
+            <form action="/venta/{{ venta.id }}/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta venta?')">
+              <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-2 px-3 rounded text-xs">Borrar</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-center py-6 text-xs text-gray-500">No hay ventas registradas.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- PAGOS -->
+    <div class="bg-[#161B22] border border-[#30363D] rounded-lg overflow-hidden shadow">
+      <div class="bg-[#212838] px-4 py-3 border-b border-[#30363D] text-xs font-bold text-emerald-400 tracking-wider uppercase">
+        Comprobantes de Pagos y Abonos Asignados
+      </div>
+
+      <!-- Escritorio -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-300">
+          <thead class="bg-[#1C2230] text-xs uppercase text-gray-400 border-b border-[#30363D]">
+            <tr>
+              <th class="px-6 py-3">Fecha de Emisión</th>
+              <th class="px-6 py-3">Beneficiario</th>
+              <th class="px-6 py-3">Concepto Detalle</th>
+              <th class="px-6 py-3 text-right">Monto Liquidado</th>
+              <th class="px-6 py-3 text-center">Comprobante</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#30363D]">
+            {% for pago in pagos %}
+            <tr class="hover:bg-[#1C2230]">
+              <td class="px-6 py-4 text-xs">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="px-6 py-4 font-medium text-white">{{ pago.vendedor.username }}</td>
+              <td class="px-6 py-4 text-xs text-gray-400 max-w-xs truncate">{{ pago.observaciones or 'Sin observaciones.' }}</td>
+              <td class="px-6 py-4 text-right font-bold text-emerald-400">${{ "{:,.2f}".format(pago.monto) }}</td>
+              <td class="px-6 py-4 text-xs">
+                <div class="flex items-center justify-center gap-2">
+                  <a href="/pago/{{ pago.id }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-1 px-3 rounded font-bold">Ver Recibo</a>
+                  {% if session.role == 'ADMIN' %}
+                  <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir este pago?')" class="inline">
+                    <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-1 px-2 rounded">Revertir</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Móvil cards pagos -->
+      <div class="sm:hidden divide-y divide-[#30363D]">
+        {% for pago in pagos %}
+        <div class="p-4 space-y-2">
+          <div class="flex justify-between items-start gap-2">
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-white">{{ pago.vendedor.username }}</p>
+              <p class="text-[10px] text-gray-400">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+              <p class="text-[10px] text-gray-500 mt-1 truncate">{{ pago.observaciones or 'Sin observaciones.' }}</p>
+            </div>
+            <p class="text-lg font-extrabold text-emerald-400 whitespace-nowrap">${{ "{:,.2f}".format(pago.monto) }}</p>
+          </div>
+          <div class="flex gap-2">
+            <a href="/pago/{{ pago.id }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-2 px-4 rounded font-bold text-xs">Ver Recibo</a>
+            {% if session.role == 'ADMIN' %}
+            <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Revertir este pago?')">
+              <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-2 px-3 rounded text-xs">Revertir</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>

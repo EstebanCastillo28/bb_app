@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de Venta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col items-center justify-start px-4 py-6">
+  <div class="max-w-2xl w-full bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl overflow-hidden">
+    <div class="bg-[#212838] px-4 py-4 border-b border-[#30363D] flex justify-between items-start gap-3">
+      <div>
+        <h2 class="text-sm font-bold text-white">DETALLE DE VENTA</h2>
+        <p class="text-[10px] text-gray-400 mt-0.5">
+          {{ venta.tipo_doc }} {{ venta.nro_doc }} &nbsp;·&nbsp; @{{ venta.vendedor.username }}
+        </p>
+      </div>
+      <a href="/dashboard" class="text-xs bg-[#1C2230] border border-[#30363D] px-3 py-2 rounded text-gray-300 hover:text-white whitespace-nowrap">← Volver</a>
+    </div>
+    <div class="p-4 sm:p-6 space-y-4">
+      <div class="bg-[#0D1117] border border-[#30363D] rounded p-4 space-y-3 text-xs">
+        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Datos del Cliente</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><span class="text-gray-500">Nombre:</span> <span class="text-white font-medium">{{ venta.nombre_cliente }}</span></div>
+          <div><span class="text-gray-500">Documento:</span> <span class="text-white">{{ venta.tipo_doc }} {{ venta.nro_doc }}</span></div>
+          <div><span class="text-gray-500">Correo:</span> <span class="text-white break-all">{{ venta.correo or '—' }}</span></div>
+          <div><span class="text-gray-500">Teléfono:</span> <span class="text-white">{{ venta.telefono or '—' }}</span></div>
+          <div><span class="text-gray-500">Ciudad:</span> <span class="text-white">{{ venta.ciudad or '—' }}</span></div>
+          <div><span class="text-gray-500">Dirección:</span> <span class="text-white">{{ venta.direccion or '—' }}</span></div>
+        </div>
+      </div>
+      <div class="bg-[#0D1117] border border-[#30363D] rounded p-4 space-y-3 text-xs">
+        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Datos Financieros</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <span class="text-gray-500 block">Monto Financiado</span>
+            <span class="text-emerald-400 font-extrabold text-base">${{ "{:,.2f}".format(venta.monto_financiado) }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500 block">Cuotas</span>
+            <span class="text-white font-bold text-base">{{ venta.cantidad_cuotas }}</span>
+          </div>
+          <div class="col-span-2 sm:col-span-1">
+            <span class="text-gray-500 block">Producto</span>
+            <span class="text-white">{{ venta.producto_financiado }}</span>
+          </div>
+        </div>
+        {% if venta.observaciones %}
+        <div><span class="text-gray-500">Observaciones:</span> <span class="text-white">{{ venta.observaciones }}</span></div>
+        {% endif %}
+        <div>
+          <span class="text-gray-500">Estado:</span>
+          <span class="ml-1 px-2 py-0.5 rounded text-xs font-bold border
+            {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
+            {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
+            {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+        </div>
+      </div>
+      <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Soportes Digitales</p>
+      {% set soportes = [
+        ('1. Foto Documento Cliente', venta.foto_documento),
+        ('2. Acta de Entrega Firmada', venta.acta_entrega),
+        ('3. Foto Cliente con Producto', venta.foto_cliente_producto),
+        ('4. Captura Aprobación Crédito', venta.captura_aprobacion),
+        ('5. Anexos Adicionales', venta.anexos_adicionales)
+      ] %}
+      {% for titulo, campo in soportes %}
+      <div class="space-y-1">
+        <p class="text-xs font-bold text-gray-400">{{ titulo }}</p>
+        {% if campo %}
+          <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] p-2 flex justify-center">
+            {% if campo.startswith('JVBER') %}
+              <iframe src="data:application/pdf;base64,{{ campo }}" class="w-full rounded" style="height:350px;"></iframe>
+            {% else %}
+              <img src="data:image/jpeg;base64,{{ campo }}" class="max-w-full rounded" style="max-height:350px;object-fit:contain;">
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded border border-dashed border-[#30363D]">No se adjuntó este soporte.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
