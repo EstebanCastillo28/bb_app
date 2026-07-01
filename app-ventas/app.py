@@ -116,7 +116,7 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
     vendedores      = Usuario.query.filter_by(role="VENDEDOR").all() if session["role"] == "ADMIN" else []
-    filtro_vendedor = request.args.get("vendedor_id")
+    filtro_vendedor = request.args.get("vendedorid")
     if session["role"] == "ADMIN":
         if filtro_vendedor:
             ventas_query = Venta.query.filter_by(usuario_id=filtro_vendedor)
