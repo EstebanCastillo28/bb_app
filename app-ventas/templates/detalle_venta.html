@@ -3,60 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalle de Venta</title>
+  <title>CELUCAST · Detalle de Venta</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
+      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+    } } }
+  </script>
+  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
 </head>
-<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col items-center justify-start px-4 py-6">
-  <div class="max-w-2xl w-full bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl overflow-hidden">
-    <div class="bg-[#212838] px-4 py-4 border-b border-[#30363D] flex justify-between items-start gap-3">
+<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col items-center justify-start px-4 py-6">
+  <div class="max-w-2xl w-full bg-cc-surface border border-cc-border rounded-2xl shadow-2xl overflow-hidden">
+    <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
+    <div class="bg-cc-card px-4 py-4 border-b border-cc-border flex justify-between items-start gap-3">
       <div>
-        <h2 class="text-sm font-bold text-white">DETALLE DE VENTA</h2>
-        <p class="text-[10px] text-gray-400 mt-0.5">
+        <h2 class="text-sm font-bold text-white">Detalle de Venta</h2>
+        <p class="text-[10px] text-cc-muted mt-0.5">
           {{ venta.tipo_doc }} {{ venta.nro_doc }} &nbsp;·&nbsp; @{{ venta.vendedor.username }}
         </p>
       </div>
-      <a href="/dashboard" class="text-xs bg-[#1C2230] border border-[#30363D] px-3 py-2 rounded text-gray-300 hover:text-white whitespace-nowrap">← Volver</a>
+      <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
     </div>
     <div class="p-4 sm:p-6 space-y-4">
-      <div class="bg-[#0D1117] border border-[#30363D] rounded p-4 space-y-3 text-xs">
-        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Datos del Cliente</p>
+      <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-3 text-xs">
+        <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Datos del Cliente</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div><span class="text-gray-500">Nombre:</span> <span class="text-white font-medium">{{ venta.nombre_cliente }}</span></div>
-          <div><span class="text-gray-500">Documento:</span> <span class="text-white">{{ venta.tipo_doc }} {{ venta.nro_doc }}</span></div>
-          <div><span class="text-gray-500">Correo:</span> <span class="text-white break-all">{{ venta.correo or '—' }}</span></div>
-          <div><span class="text-gray-500">Teléfono:</span> <span class="text-white">{{ venta.telefono or '—' }}</span></div>
-          <div><span class="text-gray-500">Ciudad:</span> <span class="text-white">{{ venta.ciudad or '—' }}</span></div>
-          <div><span class="text-gray-500">Dirección:</span> <span class="text-white">{{ venta.direccion or '—' }}</span></div>
+          <div><span class="text-cc-muted">Nombre:</span> <span class="text-white font-medium">{{ venta.nombre_cliente }}</span></div>
+          <div><span class="text-cc-muted">Documento:</span> <span class="text-white">{{ venta.tipo_doc }} {{ venta.nro_doc }}</span></div>
+          <div><span class="text-cc-muted">Correo:</span> <span class="text-white break-all">{{ venta.correo or '—' }}</span></div>
+          <div><span class="text-cc-muted">Teléfono:</span> <span class="text-white">{{ venta.telefono or '—' }}</span></div>
+          <div><span class="text-cc-muted">Ciudad:</span> <span class="text-white">{{ venta.ciudad or '—' }}</span></div>
+          <div><span class="text-cc-muted">Dirección:</span> <span class="text-white">{{ venta.direccion or '—' }}</span></div>
         </div>
       </div>
-      <div class="bg-[#0D1117] border border-[#30363D] rounded p-4 space-y-3 text-xs">
-        <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Datos Financieros</p>
+      <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-3 text-xs">
+        <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Datos Financieros</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div>
-            <span class="text-gray-500 block">Monto Financiado</span>
-            <span class="text-emerald-400 font-extrabold text-base">${{ "{:,.2f}".format(venta.monto_financiado) }}</span>
+            <span class="text-cc-muted block">Monto Financiado</span>
+            <span class="text-cc-purplel font-black text-base">${{ "{:,.2f}".format(venta.monto_financiado) }}</span>
           </div>
           <div>
-            <span class="text-gray-500 block">Cuotas</span>
+            <span class="text-cc-muted block">Cuotas</span>
             <span class="text-white font-bold text-base">{{ venta.cantidad_cuotas }}</span>
           </div>
           <div class="col-span-2 sm:col-span-1">
-            <span class="text-gray-500 block">Producto</span>
+            <span class="text-cc-muted block">Producto</span>
             <span class="text-white">{{ venta.producto_financiado }}</span>
           </div>
         </div>
         {% if venta.observaciones %}
-        <div><span class="text-gray-500">Observaciones:</span> <span class="text-white">{{ venta.observaciones }}</span></div>
+        <div><span class="text-cc-muted">Observaciones:</span> <span class="text-white">{{ venta.observaciones }}</span></div>
         {% endif %}
         <div>
-          <span class="text-gray-500">Estado:</span>
-          <span class="ml-1 px-2 py-0.5 rounded text-xs font-bold border
-            {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
-            {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
-            {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+          <span class="text-cc-muted">Estado:</span>
+          <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border
+            {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
+            {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+            {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
         </div>
       </div>
-      <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider border-b border-[#30363D] pb-1">Soportes Digitales</p>
+
+      <!-- Pagos enlazados a esta venta -->
+      <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-2 text-xs">
+        <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Pagos Enlazados</p>
+        {% if venta.pagos_relacionados %}
+          {% for p in venta.pagos_relacionados %}
+          <a href="/pago/{{ p.id }}" class="flex items-center justify-between gap-2 bg-cc-purple/10 border border-cc-purple/30 hover:bg-cc-purple/20 rounded-lg p-2.5 transition">
+            <span class="text-white truncate">🔗 {{ p.fecha.strftime('%d/%m/%Y') }} · {{ p.observaciones or 'Abono' }}</span>
+            <span class="text-cc-purplel font-bold whitespace-nowrap">${{ "{:,.2f}".format(p.monto) }}</span>
+          </a>
+          {% endfor %}
+        {% else %}
+          <p class="text-cc-muted italic">Aún no hay pagos enlazados a esta venta.</p>
+        {% endif %}
+      </div>
+
+      <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Soportes Digitales</p>
       {% set soportes = [
         ('1. Foto Documento Cliente', venta.foto_documento),
         ('2. Acta de Entrega Firmada', venta.acta_entrega),
@@ -66,9 +92,9 @@
       ] %}
       {% for titulo, campo in soportes %}
       <div class="space-y-1">
-        <p class="text-xs font-bold text-gray-400">{{ titulo }}</p>
+        <p class="text-xs font-semibold text-slate-300">{{ titulo }}</p>
         {% if campo %}
-          <div class="border border-[#30363D] rounded overflow-hidden bg-[#0D1117] p-2 flex justify-center">
+          <div class="border border-cc-border rounded-xl overflow-hidden bg-cc-bg p-2 flex justify-center">
             {% if campo.startswith('JVBER') %}
               <iframe src="data:application/pdf;base64,{{ campo }}" class="w-full rounded" style="height:350px;"></iframe>
             {% else %}
@@ -76,7 +102,7 @@
             {% endif %}
           </div>
         {% else %}
-          <p class="text-xs text-gray-600 italic py-4 text-center bg-[#0D1117] rounded border border-dashed border-[#30363D]">No se adjuntó este soporte.</p>
+          <p class="text-xs text-cc-muted italic py-4 text-center bg-cc-bg rounded-xl border border-dashed border-cc-border">No se adjuntó este soporte.</p>
         {% endif %}
       </div>
       {% endfor %}

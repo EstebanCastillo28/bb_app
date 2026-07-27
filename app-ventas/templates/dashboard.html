@@ -3,25 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>CELUCAST · Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
+      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+    } } }
+  </script>
+  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
 </head>
-<body class="bg-[#0D1117] text-[#F0F6FC] min-h-screen flex flex-col">
-  <div class="h-1 bg-emerald-500"></div>
+<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col">
+  <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
 
-  <header class="bg-[#161B22] border-b border-[#30363D] py-3 px-4 sm:px-8">
-    <div class="flex justify-between items-center gap-2">
-      <h1 class="text-base sm:text-xl font-bold text-white whitespace-nowrap">
-        PANEL <span class="text-xs text-gray-400 font-normal">{{ session.username }}</span>
-      </h1>
+  <header class="bg-cc-surface/90 backdrop-blur border-b border-cc-border py-3 px-4 sm:px-8 sticky top-0 z-20">
+    <div class="flex justify-between items-center gap-2 max-w-7xl mx-auto">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white shadow-lg shadow-cc-purple/30 flex-shrink-0">C</div>
+        <div class="leading-none min-w-0">
+          <p class="text-sm font-black tracking-tight text-white truncate">CELUCAST</p>
+          <p class="text-[10px] text-cc-muted truncate">{{ session.username }} · {{ session.role }}</p>
+        </div>
+      </div>
       <div class="flex gap-2 overflow-x-auto flex-shrink-0" style="-webkit-overflow-scrolling:touch;">
         {% if session.role == 'ADMIN' %}
-          <a href="/admin/usuario" class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Usuario</a>
-          <a href="/admin/pago"    class="bg-[#212838] hover:bg-gray-700 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Pago</a>
+          <a href="/admin/usuario" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap border border-cc-border transition">+ Usuario</a>
+          <a href="/admin/pago"    class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Pago</a>
         {% else %}
-          <a href="/venta/nueva"   class="bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">+ Venta</a>
+          <a href="/venta/nueva"   class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Venta</a>
         {% endif %}
-        <a href="/logout" class="bg-red-700 hover:bg-red-600 text-xs font-bold py-2 px-3 rounded text-white whitespace-nowrap">Salir</a>
+        <a href="/logout" class="bg-cc-card hover:bg-red-600/80 border border-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap transition">Salir</a>
       </div>
     </div>
   </header>
@@ -30,63 +43,67 @@
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div class="p-3 text-xs rounded border bg-emerald-950/40 text-emerald-400 border-emerald-800 text-center">{{ messages[0] }}</div>
+        <div class="p-3 text-xs rounded-lg border bg-cc-purple/10 text-cc-purplel border-cc-purple/40 text-center">{{ messages[0] }}</div>
       {% endif %}
     {% endwith %}
 
     <!-- KPIs -->
     <div class="grid {% if session.role == 'ADMIN' %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-4">
       {% if session.role == 'ADMIN' %}
-      <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg shadow">
-        <p class="text-[10px] font-bold text-[#8B949E] tracking-wider uppercase">Monto Total Aprobado Global</p>
-        <p class="text-xl sm:text-3xl font-extrabold text-white mt-1">${{ "{:,.2f}".format(total_subido) }}</p>
+      <div class="relative bg-cc-surface border border-cc-border p-5 rounded-xl overflow-hidden">
+        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cc-purple/10 blur-2xl"></div>
+        <p class="text-[10px] font-semibold text-cc-muted tracking-widest uppercase">Monto Total Aprobado Global</p>
+        <p class="text-xl sm:text-3xl font-black text-white mt-2">${{ "{:,.2f}".format(total_subido) }}</p>
       </div>
       {% endif %}
-      <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg shadow">
-        <p class="text-[10px] font-bold text-[#8B949E] tracking-wider uppercase">
+      <div class="relative bg-gradient-to-br from-cc-card to-cc-surface border border-cc-purple/40 p-5 rounded-xl overflow-hidden">
+        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fuchsia-500/10 blur-2xl"></div>
+        <p class="text-[10px] font-semibold text-cc-purplel tracking-widest uppercase">
           {% if session.role == 'ADMIN' %}Monto Pagado a Vendedores{% else %}Mis Comisiones Recibidas / Pagadas{% endif %}
         </p>
-        <p class="text-xl sm:text-3xl font-extrabold text-emerald-400 mt-1">${{ "{:,.2f}".format(total_pagado) }}</p>
+        <p class="text-xl sm:text-3xl font-black text-cc-purplel mt-2">${{ "{:,.2f}".format(total_pagado) }}</p>
       </div>
     </div>
 
     <!-- Filtros -->
-    <div class="bg-[#161B22] border border-[#30363D] p-4 rounded-lg space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
+    <div class="bg-cc-surface border border-cc-border p-4 rounded-xl space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
       {% if session.role == 'ADMIN' %}
       <form method="GET" action="/dashboard" class="space-y-2">
-        <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Filtrar por Vendedor</label>
+        <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest">Filtrar por Vendedor</label>
         <div class="flex gap-2">
-          <select name="vendedorid" class="bg-[#1C2230] border border-[#30363D] rounded px-3 py-2 text-sm w-full text-white">
+          <select name="vendedorid" class="bg-cc-card border border-cc-border rounded-lg px-3 py-2 text-sm w-full text-white focus:outline-none focus:border-cc-purple">
             <option value="">Todos los vendedores</option>
             {% for vend in vendedores %}
               <option value="{{ vend.id }}" {% if filtro_vendedor == vend.id|string %}selected{% endif %}>{{ vend.username }}</option>
             {% endfor %}
           </select>
-          <button type="submit" class="bg-blue-600 px-4 py-2 text-xs font-bold rounded text-white cursor-pointer whitespace-nowrap">Ver</button>
+          <button type="submit" class="bg-cc-elevated hover:bg-cc-border border border-cc-border px-4 py-2 text-xs font-semibold rounded-lg text-white cursor-pointer whitespace-nowrap transition">Ver</button>
         </div>
       </form>
       {% endif %}
       <form method="POST" action="/download-report" class="space-y-2">
-        <label class="block text-[10px] font-bold text-[#8B949E] uppercase">Descargar Informe Excel</label>
+        <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest">Descargar Informe Excel</label>
         <input type="hidden" name="vendedoridexcel" value="{{ filtro_vendedor or '' }}">
         <div class="grid grid-cols-2 gap-2">
-          <input type="date" name="fechadesde" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-2 text-xs text-white w-full">
-          <input type="date" name="fechahasta" class="bg-[#1C2230] border border-[#30363D] rounded px-2 py-2 text-xs text-white w-full">
+          <input type="date" name="fechadesde" class="bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-white w-full focus:outline-none focus:border-cc-purple">
+          <input type="date" name="fechahasta" class="bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-white w-full focus:outline-none focus:border-cc-purple">
         </div>
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-xs font-bold py-2 rounded text-white cursor-pointer">
+        <button type="submit" class="w-full bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-bold py-2 rounded-lg text-white cursor-pointer shadow shadow-cc-purple/30 transition">
           Descargar Rango Seleccionado
         </button>
       </form>
     </div>
 
     <!-- VENTAS -->
-    <div class="bg-[#161B22] border border-[#30363D] rounded-lg overflow-hidden shadow">
-      <div class="bg-[#212838] px-4 py-3 border-b border-[#30363D] text-xs font-bold text-[#8B949E] uppercase">Historial General de Ventas</div>
+    <div class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
+      <div class="bg-cc-card px-4 py-3 border-b border-cc-border text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Historial General de Ventas
+      </div>
 
       <!-- Escritorio -->
       <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-300">
-          <thead class="bg-[#1C2230] text-xs uppercase text-gray-400 border-b border-[#30363D]">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-cc-card/60 text-[11px] uppercase text-cc-muted border-b border-cc-border tracking-wider">
             <tr>
               <th class="px-4 py-3">Fecha</th>
               <th class="px-4 py-3">Estado</th>
@@ -96,153 +113,168 @@
               <th class="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[#30363D]">
+          <tbody class="divide-y divide-cc-border">
             {% for venta in ventas %}
-            <tr class="hover:bg-[#1C2230] {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
+            <tr class="hover:bg-cc-card/60 transition {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
               <td class="px-4 py-4 text-xs">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
               <td class="px-4 py-4 text-xs">
-                <span class="px-2 py-0.5 rounded text-xs font-bold border
-                  {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
-                  {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
-                  {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border
+                  {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
+                  {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+                  {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
               </td>
               <td class="px-4 py-4 font-medium text-white">{{ venta.vendedor.username }}</td>
               <td class="px-4 py-4 max-w-[150px] truncate">{{ venta.nombre_cliente }}</td>
-              <td class="px-4 py-4 font-bold text-gray-100">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
+              <td class="px-4 py-4 font-bold text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
               <td class="px-4 py-4 text-xs">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
-                  <a href="/venta/{{ venta.id }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-1 px-3 rounded whitespace-nowrap">Ver</a>
+                  <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Ver</a>
                   {% if session.role == 'ADMIN' %}
                   <form action="/venta/{{ venta.id }}/estado" method="POST" class="inline">
                     <select name="estado" onchange="this.form.submit()"
-                      class="bg-[#161B22] border border-[#30363D] rounded text-white text-xs px-1 py-1 focus:outline-none">
+                      class="bg-cc-card border border-cc-border rounded-lg text-white text-xs px-1 py-1 focus:outline-none focus:border-cc-purple">
                       <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                       <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
                       <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
                     </select>
                   </form>
                   <form action="/venta/{{ venta.id }}/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta venta?')" class="inline">
-                    <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-1 px-2 rounded">Borrar</button>
+                    <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-1 px-2 rounded-lg transition">Borrar</button>
                   </form>
                   {% endif %}
                 </div>
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center py-6 text-xs text-gray-500">No hay ventas registradas.</td></tr>
+            <tr><td colspan="6" class="text-center py-6 text-xs text-cc-muted">No hay ventas registradas.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
       <!-- Móvil cards ventas -->
-      <div class="sm:hidden divide-y divide-[#30363D]">
+      <div class="sm:hidden divide-y divide-cc-border">
         {% for venta in ventas %}
         <div class="p-4 space-y-3 {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
           <div class="flex justify-between items-start gap-2">
             <div class="min-w-0">
               <p class="text-sm font-bold text-white truncate">{{ venta.nombre_cliente }}</p>
-              <p class="text-[10px] text-gray-400">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
+              <p class="text-[10px] text-cc-muted">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
             </div>
-            <span class="px-2 py-0.5 rounded text-xs font-bold border whitespace-nowrap
-              {% if venta.estado == 'PENDIENTE' %}bg-yellow-950 text-yellow-400 border-yellow-800
-              {% elif venta.estado == 'REVISADO' %}bg-emerald-950 text-emerald-400 border-emerald-800
-              {% else %}bg-red-950 text-red-400 border-red-800{% endif %}">{{ venta.estado }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap
+              {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
+              {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+              {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
           </div>
-          <p class="text-lg font-extrabold text-emerald-400">${{ "{:,.2f}".format(venta.monto_financiado) }}</p>
+          <p class="text-lg font-black text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</p>
           <div class="flex gap-2 flex-wrap">
-            <a href="/venta/{{ venta.id }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded text-xs">Ver adjuntos</a>
+            <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-2 px-4 rounded-lg text-xs transition">Ver adjuntos</a>
             {% if session.role == 'ADMIN' %}
             <form action="/venta/{{ venta.id }}/estado" method="POST" class="flex-1 min-w-0">
               <select name="estado" onchange="this.form.submit()"
-                class="w-full bg-[#161B22] border border-[#30363D] rounded text-white text-xs px-2 py-2 focus:outline-none">
+                class="w-full bg-cc-card border border-cc-border rounded-lg text-white text-xs px-2 py-2 focus:outline-none focus:border-cc-purple">
                 <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                 <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
                 <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
               </select>
             </form>
             <form action="/venta/{{ venta.id }}/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta venta?')">
-              <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-2 px-3 rounded text-xs">Borrar</button>
+              <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-2 px-3 rounded-lg text-xs transition">Borrar</button>
             </form>
             {% endif %}
           </div>
         </div>
         {% else %}
-        <p class="text-center py-6 text-xs text-gray-500">No hay ventas registradas.</p>
+        <p class="text-center py-6 text-xs text-cc-muted">No hay ventas registradas.</p>
         {% endfor %}
       </div>
     </div>
 
     <!-- PAGOS -->
-    <div class="bg-[#161B22] border border-[#30363D] rounded-lg overflow-hidden shadow">
-      <div class="bg-[#212838] px-4 py-3 border-b border-[#30363D] text-xs font-bold text-emerald-400 tracking-wider uppercase">
-        Comprobantes de Pagos y Abonos Asignados
+    <div class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
+      <div class="bg-cc-card px-4 py-3 border-b border-cc-border text-xs font-bold text-cc-purplel tracking-widest uppercase flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-fuchsia-500"></span> Comprobantes de Pagos y Abonos Asignados
       </div>
 
       <!-- Escritorio -->
       <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-300">
-          <thead class="bg-[#1C2230] text-xs uppercase text-gray-400 border-b border-[#30363D]">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-cc-card/60 text-[11px] uppercase text-cc-muted border-b border-cc-border tracking-wider">
             <tr>
               <th class="px-6 py-3">Fecha de Emisión</th>
               <th class="px-6 py-3">Beneficiario</th>
+              <th class="px-6 py-3">Venta Enlazada</th>
               <th class="px-6 py-3">Concepto Detalle</th>
               <th class="px-6 py-3 text-right">Monto Liquidado</th>
               <th class="px-6 py-3 text-center">Comprobante</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[#30363D]">
+          <tbody class="divide-y divide-cc-border">
             {% for pago in pagos %}
-            <tr class="hover:bg-[#1C2230]">
+            <tr class="hover:bg-cc-card/60 transition">
               <td class="px-6 py-4 text-xs">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
               <td class="px-6 py-4 font-medium text-white">{{ pago.vendedor.username }}</td>
-              <td class="px-6 py-4 text-xs text-gray-400 max-w-xs truncate">{{ pago.observaciones or 'Sin observaciones.' }}</td>
-              <td class="px-6 py-4 text-right font-bold text-emerald-400">${{ "{:,.2f}".format(pago.monto) }}</td>
+              <td class="px-6 py-4 text-xs">
+                {% if pago.venta %}
+                  <a href="/venta/{{ pago.venta.id }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cc-purple/10 text-cc-purplel border border-cc-purple/30 hover:bg-cc-purple/20 transition max-w-[180px] truncate">
+                    🔗 {{ pago.venta.nombre_cliente }}
+                  </a>
+                {% else %}
+                  <span class="text-cc-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-xs text-cc-muted max-w-xs truncate">{{ pago.observaciones or 'Sin observaciones.' }}</td>
+              <td class="px-6 py-4 text-right font-bold text-cc-purplel">${{ "{:,.2f}".format(pago.monto) }}</td>
               <td class="px-6 py-4 text-xs">
                 <div class="flex items-center justify-center gap-2">
-                  <a href="/pago/{{ pago.id }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-1 px-3 rounded font-bold">Ver Recibo</a>
+                  <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-1 px-3 rounded-lg font-semibold transition">Ver Recibo</a>
                   {% if session.role == 'ADMIN' %}
                   <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir este pago?')" class="inline">
-                    <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-1 px-2 rounded">Revertir</button>
+                    <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-1 px-2 rounded-lg transition">Revertir</button>
                   </form>
                   {% endif %}
                 </div>
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados.</td></tr>
+            <tr><td colspan="6" class="text-center py-6 text-xs text-cc-muted">No se registran movimientos ni abonos liquidados.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
       <!-- Móvil cards pagos -->
-      <div class="sm:hidden divide-y divide-[#30363D]">
+      <div class="sm:hidden divide-y divide-cc-border">
         {% for pago in pagos %}
         <div class="p-4 space-y-2">
           <div class="flex justify-between items-start gap-2">
             <div class="min-w-0">
               <p class="text-sm font-bold text-white">{{ pago.vendedor.username }}</p>
-              <p class="text-[10px] text-gray-400">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
-              <p class="text-[10px] text-gray-500 mt-1 truncate">{{ pago.observaciones or 'Sin observaciones.' }}</p>
+              <p class="text-[10px] text-cc-muted">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+              {% if pago.venta %}
+              <a href="/venta/{{ pago.venta.id }}" class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-cc-purple/10 text-cc-purplel border border-cc-purple/30 truncate max-w-full">🔗 {{ pago.venta.nombre_cliente }}</a>
+              {% endif %}
+              <p class="text-[10px] text-cc-muted mt-1 truncate">{{ pago.observaciones or 'Sin observaciones.' }}</p>
             </div>
-            <p class="text-lg font-extrabold text-emerald-400 whitespace-nowrap">${{ "{:,.2f}".format(pago.monto) }}</p>
+            <p class="text-lg font-black text-cc-purplel whitespace-nowrap">${{ "{:,.2f}".format(pago.monto) }}</p>
           </div>
           <div class="flex gap-2">
-            <a href="/pago/{{ pago.id }}" class="bg-zinc-700 hover:bg-zinc-600 text-white py-2 px-4 rounded font-bold text-xs">Ver Recibo</a>
+            <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-2 px-4 rounded-lg font-semibold text-xs transition">Ver Recibo</a>
             {% if session.role == 'ADMIN' %}
             <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Revertir este pago?')">
-              <button type="submit" class="bg-red-900/60 hover:bg-red-600 text-red-200 font-bold py-2 px-3 rounded text-xs">Revertir</button>
+              <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-2 px-3 rounded-lg text-xs transition">Revertir</button>
             </form>
             {% endif %}
           </div>
         </div>
         {% else %}
-        <p class="text-center py-6 text-xs text-gray-500">No se registran movimientos ni abonos liquidados.</p>
+        <p class="text-center py-6 text-xs text-cc-muted">No se registran movimientos ni abonos liquidados.</p>
         {% endfor %}
       </div>
     </div>
 
   </main>
+
+  <footer class="text-center text-[10px] text-cc-muted py-4 border-t border-cc-border">© CELUCAST · Panel ejecutivo de ventas</footer>
 </body>
 </html>

@@ -60,6 +60,9 @@ class Pago(db.Model):
     observaciones = db.Column(db.Text)
     comprobante   = db.Column(db.Text)
     usuario_id    = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    # Enlace opcional con una venta. Nullable: los pagos existentes quedan sin enlazar.
+    venta_id      = db.Column(db.Integer, db.ForeignKey('venta.id'), nullable=True)
+    venta         = db.relationship('Venta', backref=db.backref('pagos_relacionados', lazy=True))
 
 
 def init_db():
@@ -71,6 +74,7 @@ def init_db():
         for ddl in (
             "ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'",
             "ALTER TABLE pago ADD COLUMN comprobante TEXT",
+            "ALTER TABLE pago ADD COLUMN venta_id INTEGER",
         ):
             try:
                 db.session.execute(db.text(ddl))
@@ -280,13 +284,16 @@ def registrar_pago():
     if "user_id" not in session or session["role"] != "ADMIN":
         return redirect(url_for("login"))
     vendedores = Usuario.query.filter_by(role="VENDEDOR").all()
+    ventas     = Venta.query.order_by(Venta.fecha.desc()).all()
     if request.method == "POST":
         try:
+            venta_id_raw = request.form.get("venta_id")
             pago = Pago(
                 monto         = float(request.form.get("monto")),
                 observaciones = request.form.get("observaciones"),
                 comprobante   = procesar_archivo("comprobante"),
-                usuario_id    = int(request.form.get("vendedor_id"))
+                usuario_id    = int(request.form.get("vendedor_id")),
+                venta_id      = int(venta_id_raw) if venta_id_raw else None
             )
             db.session.add(pago)
             db.session.commit()
@@ -295,7 +302,7 @@ def registrar_pago():
         except Exception as e:
             db.session.rollback()
             flash(f"Error al registrar el pago: {str(e)}", "error")
-    return render_template("registrar_pago.html", vendedores=vendedores)
+    return render_template("registrar_pago.html", vendedores=vendedores, ventas=ventas)
 
 
 @app.route("/download-report", methods=["POST"])

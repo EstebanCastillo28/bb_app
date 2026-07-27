@@ -3,92 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nueva Venta</title>
+  <title>CELUCAST · Nueva Venta</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
+      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+    } } }
+  </script>
+  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
 </head>
-<body class="bg-[#0D1117] text-[#F0F6FC] pb-24">
-  <div class="sticky top-0 z-10 bg-[#161B22] border-b border-[#30363D] px-4 py-3 flex justify-between items-center shadow-lg">
-    <h2 class="text-sm font-bold text-white">REGISTRO DE VENTA</h2>
-    <a href="/dashboard" class="text-xs text-gray-400 hover:text-white py-1 px-2">← Volver</a>
+<body class="bg-cc-bg text-slate-100 pb-24">
+  <div class="sticky top-0 z-10 bg-cc-surface/90 backdrop-blur border-b border-cc-border px-4 py-3 flex justify-between items-center shadow-lg">
+    <div class="flex items-center gap-2">
+      <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white text-sm">C</div>
+      <h2 class="text-sm font-bold text-white">Registro de Venta</h2>
+    </div>
+    <a href="/dashboard" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
   </div>
-  <div class="max-w-2xl mx-auto px-4 py-4">
+  <div class="max-w-2xl mx-auto px-4 py-5">
     <form method="POST" enctype="multipart/form-data" class="space-y-6">
 
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">Información del Cliente</h3>
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3">
+        <h3 class="text-[11px] font-bold text-cc-purplel border-b border-cc-border pb-2 uppercase tracking-widest flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Información del Cliente
+        </h3>
         <div>
-          <label class="block text-[10px] text-gray-400 mb-1">Nombre Completo *</label>
+          <label class="block text-[10px] text-cc-muted mb-1">Nombre Completo *</label>
           <input type="text" name="nombre_cliente" required
-            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Tipo Doc</label>
-            <select name="tipo_doc" class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+            <label class="block text-[10px] text-cc-muted mb-1">Tipo Doc</label>
+            <select name="tipo_doc" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
               <option>C.C.</option><option>C.E.</option><option>NIT</option>
             </select>
           </div>
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Número Documento *</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Número Documento *</label>
             <input type="text" name="nro_doc" required
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Correo</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Correo</label>
             <input type="email" name="correo"
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Teléfono</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Teléfono</label>
             <input type="tel" name="telefono"
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Ciudad</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Ciudad</label>
             <input type="text" name="ciudad"
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Dirección Completa</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Dirección Completa</label>
             <input type="text" name="direccion"
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
       </div>
 
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">Datos de la Operación</h3>
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3">
+        <h3 class="text-[11px] font-bold text-cc-purplel border-b border-cc-border pb-2 uppercase tracking-widest flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Datos de la Operación
+        </h3>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Monto Financiado *</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Monto Financiado *</label>
             <input type="number" step="0.01" name="monto_financiado" required
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-gray-400 mb-1">Número de Cuotas *</label>
+            <label class="block text-[10px] text-cc-muted mb-1">Número de Cuotas *</label>
             <input type="number" name="cantidad_cuotas" required
-              class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div>
-          <label class="block text-[10px] text-gray-400 mb-1">Producto Adquirido *</label>
+          <label class="block text-[10px] text-cc-muted mb-1">Producto Adquirido *</label>
           <input type="text" name="producto_financiado" required
-            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
         </div>
         <div>
-          <label class="block text-[10px] text-gray-400 mb-1">Observaciones</label>
+          <label class="block text-[10px] text-cc-muted mb-1">Observaciones</label>
           <textarea name="observaciones" rows="3"
-            class="w-full bg-[#1C2230] border border-[#30363D] rounded p-3 text-sm text-white focus:outline-none"></textarea>
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple"></textarea>
         </div>
       </div>
 
-      <div class="space-y-3">
-        <h3 class="text-xs font-bold text-emerald-400 border-b border-[#30363D] pb-1 uppercase tracking-wider">
-          Soportes Digitales <span class="text-gray-500 normal-case">(Máx. 4.5MB combinados)</span>
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3">
+        <h3 class="text-[11px] font-bold text-cc-purplel border-b border-cc-border pb-2 uppercase tracking-widest flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Soportes Digitales <span class="text-cc-muted normal-case font-normal">(Máx. 4.5MB combinados)</span>
         </h3>
         <div class="space-y-2">
           {% set archivos = [
@@ -99,17 +115,17 @@
             ('anexos_adicionales', 'Anexos Adicionales')
           ] %}
           {% for name, label in archivos %}
-          <div class="bg-[#1C2230] border border-[#30363D] rounded p-3">
-            <label class="block text-[10px] text-gray-400 mb-2">{{ label }}</label>
-            <input type="file" name="{{ name }}" accept="image/*,application/pdf" class="w-full text-gray-400 text-xs">
+          <div class="bg-cc-card border border-cc-border rounded-lg p-3">
+            <label class="block text-[10px] text-cc-muted mb-2">{{ label }}</label>
+            <input type="file" name="{{ name }}" accept="image/*,application/pdf" class="w-full text-cc-muted text-xs file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-cc-purple file:text-white file:text-xs file:font-semibold">
           </div>
           {% endfor %}
         </div>
       </div>
 
-      <div class="fixed bottom-0 left-0 right-0 p-4 bg-[#0D1117] border-t border-[#30363D] sm:static sm:p-0 sm:bg-transparent sm:border-0">
+      <div class="fixed bottom-0 left-0 right-0 p-4 bg-cc-bg/95 backdrop-blur border-t border-cc-border sm:static sm:p-0 sm:bg-transparent sm:border-0">
         <button type="submit"
-          class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-sm font-bold py-3 rounded cursor-pointer">
+          class="w-full bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-white text-sm font-bold py-3 rounded-lg shadow-lg shadow-cc-purple/30 cursor-pointer transition">
           GUARDAR REGISTRO DE VENTA
         </button>
       </div>
