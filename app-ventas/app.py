@@ -62,25 +62,37 @@ class Pago(db.Model):
     usuario_id    = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
 
-with app.app_context():
-    db.create_all()
-    try:
-        db.session.execute(db.text("ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-    try:
-        db.session.execute(db.text("ALTER TABLE pago ADD COLUMN comprobante TEXT"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-    if not Usuario.query.filter_by(username="admin").first():
-        db.session.add(Usuario(
-            username="admin",
-            password=generate_password_hash("admin123"),
-            role="ADMIN"
-        ))
-        db.session.commit()
+def init_db():
+    """Inicializa la BD de forma SEGURA: solo agrega columnas o el usuario admin
+    si faltan. Nunca borra ni modifica datos ya almacenados (los ALTER TABLE son
+    aditivos y fallan silenciosamente si la columna ya existe)."""
+    with app.app_context():
+        db.create_all()
+        for ddl in (
+            "ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'",
+            "ALTER TABLE pago ADD COLUMN comprobante TEXT",
+        ):
+            try:
+                db.session.execute(db.text(ddl))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        if not Usuario.query.filter_by(username="admin").first():
+            db.session.add(Usuario(
+                username="admin",
+                password=generate_password_hash("admin123"),
+                role="ADMIN"
+            ))
+            db.session.commit()
+
+
+# En Vercel, este bloque corre en cada arranque en frío. Si la base de datos no
+# responde en ese instante, NO debe tumbar toda la función serverless
+# (eso es lo que producía el error FUNCTION_INVOCATION_FAILED). Lo protegemos:
+try:
+    init_db()
+except Exception as e:
+    print(f"[init_db] No se pudo inicializar la BD al arrancar: {e}")
 
 
 def procesar_archivo(file_field):
