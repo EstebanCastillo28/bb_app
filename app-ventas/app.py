@@ -65,6 +65,29 @@ class Pago(db.Model):
     venta         = db.relationship('Venta', backref=db.backref('pagos_relacionados', lazy=True))
 
 
+class Comentario(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    venta_id   = db.Column(db.Integer, db.ForeignKey('venta.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    texto      = db.Column(db.Text, nullable=False)
+    fecha      = db.Column(db.DateTime, default=datetime.utcnow)
+    venta      = db.relationship('Venta', backref=db.backref('comentarios', lazy=True, cascade="all, delete-orphan"))
+    autor      = db.relationship('Usuario')
+
+
+class CambioVenta(db.Model):
+    """Registro de auditoría: cada cambio a una venta y qué usuario lo hizo."""
+    id             = db.Column(db.Integer, primary_key=True)
+    venta_id       = db.Column(db.Integer, db.ForeignKey('venta.id'), nullable=False)
+    usuario_id     = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    campo          = db.Column(db.String(60), nullable=False)
+    valor_anterior = db.Column(db.Text)
+    valor_nuevo    = db.Column(db.Text)
+    fecha          = db.Column(db.DateTime, default=datetime.utcnow)
+    venta          = db.relationship('Venta', backref=db.backref('historial', lazy=True, cascade="all, delete-orphan"))
+    autor          = db.relationship('Usuario')
+
+
 def init_db():
     """Inicializa la BD de forma SEGURA: solo agrega columnas o el usuario admin
     si faltan. Nunca borra ni modifica datos ya almacenados (los ALTER TABLE son
@@ -104,6 +127,33 @@ def procesar_archivo(file_field):
     if file and file.filename != '':
         return base64.b64encode(file.read()).decode('utf-8')
     return ""
+
+
+# Campos que un usuario puede editar de una venta (además se auditan los cambios).
+CAMPOS_EDITABLES = [
+    ("nombre_cliente",      "Nombre del cliente",   "text"),
+    ("tipo_doc",            "Tipo de documento",    "text"),
+    ("nro_doc",             "Número de documento",  "text"),
+    ("correo",              "Correo",               "text"),
+    ("telefono",            "Teléfono",             "text"),
+    ("direccion",           "Dirección",            "text"),
+    ("ciudad",              "Ciudad",               "text"),
+    ("monto_financiado",    "Monto financiado",     "number"),
+    ("cantidad_cuotas",     "Cantidad de cuotas",   "number"),
+    ("producto_financiado", "Producto financiado",  "text"),
+    ("observaciones",       "Observaciones",        "text"),
+]
+
+
+def buscar_cedula_duplicada(nro_doc, excluir_id=None):
+    """Devuelve la primera venta con la misma cédula (nro_doc), o None.
+    Se puede excluir una venta (útil al editar la venta actual)."""
+    if not nro_doc:
+        return None
+    q = Venta.query.filter_by(nro_doc=nro_doc)
+    if excluir_id is not None:
+        q = q.filter(Venta.id != excluir_id)
+    return q.first()
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -159,6 +209,16 @@ def nueva_venta():
         return redirect(url_for("login"))
     if request.method == "POST":
         try:
+            nro_doc = (request.form.get("nro_doc") or "").strip()
+            duplicada = buscar_cedula_duplicada(nro_doc)
+            if duplicada:
+                flash(
+                    f"No se guardó: la cédula {nro_doc} ya está registrada en la venta de "
+                    f"«{duplicada.nombre_cliente}» (@{duplicada.vendedor.username}, "
+                    f"{duplicada.fecha.strftime('%d/%m/%Y')}).",
+                    "error"
+                )
+                return render_template("nueva_venta.html", datos=request.form)
             nueva = Venta(
                 nombre_cliente        = request.form.get("nombre_cliente"),
                 tipo_doc              = request.form.get("tipo_doc"),
@@ -186,7 +246,8 @@ def nueva_venta():
         except Exception as e:
             db.session.rollback()
             flash(f"Error al guardar la venta: {str(e)}", "error")
-    return render_template("nueva_venta.html")
+            return render_template("nueva_venta.html", datos=request.form)
+    return render_template("nueva_venta.html", datos={})
 
 
 @app.route("/venta/<int:id>")
@@ -198,6 +259,76 @@ def detalle_venta(id):
         flash("Acceso denegado.", "error")
         return redirect(url_for("dashboard"))
     return render_template("detalle_venta.html", venta=venta)
+
+
+@app.route("/venta/<int:id>/editar", methods=["GET", "POST"])
+def editar_venta(id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    venta = Venta.query.get_or_404(id)
+    # Permiso: el admin edita cualquiera; el vendedor solo las suyas.
+    if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
+        flash("No tienes autorización para editar esta venta.", "error")
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        try:
+            nro_doc = (request.form.get("nro_doc") or "").strip()
+            duplicada = buscar_cedula_duplicada(nro_doc, excluir_id=venta.id)
+            if duplicada:
+                flash(
+                    f"No se guardó: la cédula {nro_doc} ya está registrada en la venta de "
+                    f"«{duplicada.nombre_cliente}» (@{duplicada.vendedor.username}, "
+                    f"{duplicada.fecha.strftime('%d/%m/%Y')}).",
+                    "error"
+                )
+                return render_template("editar_venta.html", venta=venta, campos=CAMPOS_EDITABLES)
+
+            n_cambios = 0
+            for campo, etiqueta, tipo in CAMPOS_EDITABLES:
+                anterior = getattr(venta, campo)
+                crudo    = request.form.get(campo)
+                if tipo == "number":
+                    nuevo  = float(crudo) if campo == "monto_financiado" else int(crudo)
+                    cambio = float(anterior or 0) != float(nuevo)
+                else:
+                    nuevo  = (crudo or "").strip()
+                    cambio = (anterior or "") != nuevo
+                if cambio:
+                    db.session.add(CambioVenta(
+                        venta_id       = venta.id,
+                        usuario_id     = session["user_id"],
+                        campo          = etiqueta,
+                        valor_anterior = "" if anterior is None else str(anterior),
+                        valor_nuevo    = "" if nuevo is None else str(nuevo),
+                    ))
+                    setattr(venta, campo, nuevo)
+                    n_cambios += 1
+            db.session.commit()
+            flash(f"Venta actualizada. {n_cambios} campo(s) modificado(s)." if n_cambios
+                  else "No se detectaron cambios.", "success")
+            return redirect(url_for("detalle_venta", id=venta.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al actualizar la venta: {str(e)}", "error")
+    return render_template("editar_venta.html", venta=venta, campos=CAMPOS_EDITABLES)
+
+
+@app.route("/venta/<int:id>/comentario", methods=["POST"])
+def agregar_comentario(id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    venta = Venta.query.get_or_404(id)
+    if session["role"] != "ADMIN" and venta.usuario_id != session["user_id"]:
+        flash("No tienes autorización para comentar esta venta.", "error")
+        return redirect(url_for("dashboard"))
+    texto = (request.form.get("texto") or "").strip()
+    if texto:
+        db.session.add(Comentario(
+            venta_id=venta.id, usuario_id=session["user_id"], texto=texto
+        ))
+        db.session.commit()
+        flash("Comentario agregado.", "success")
+    return redirect(url_for("detalle_venta", id=venta.id))
 
 
 @app.route("/pago/<int:id>")
@@ -217,7 +348,7 @@ def cambiar_estado(id):
         return redirect(url_for("login"))
     venta = Venta.query.get_or_404(id)
     nuevo_estado = request.form.get("estado")
-    if nuevo_estado in ["PENDIENTE", "REVISADO", "NO INGRESO"]:
+    if nuevo_estado in ["PENDIENTE", "REVISADO", "VENTA PAGA", "NO INGRESO"]:
         venta.estado = nuevo_estado
         db.session.commit()
         flash(f"Estado actualizado a {nuevo_estado}.", "success")
@@ -296,6 +427,11 @@ def registrar_pago():
                 venta_id      = int(venta_id_raw) if venta_id_raw else None
             )
             db.session.add(pago)
+            # Al enlazar un pago con una venta, la venta pasa automáticamente a VENTA PAGA.
+            if pago.venta_id:
+                venta_enlazada = Venta.query.get(pago.venta_id)
+                if venta_enlazada:
+                    venta_enlazada.estado = "VENTA PAGA"
             db.session.commit()
             flash("Pago registrado de manera exitosa.", "success")
             return redirect(url_for("dashboard"))

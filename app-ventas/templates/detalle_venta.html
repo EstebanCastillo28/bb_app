@@ -25,9 +25,17 @@
           {{ venta.tipo_doc }} {{ venta.nro_doc }} &nbsp;·&nbsp; @{{ venta.vendedor.username }}
         </p>
       </div>
-      <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <a href="/venta/{{ venta.id }}/editar" class="text-xs bg-cc-purple/20 border border-cc-purple/40 px-3 py-2 rounded-lg text-cc-purplel hover:bg-cc-purple/30 whitespace-nowrap transition">✏️ Editar</a>
+        <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
+      </div>
     </div>
     <div class="p-4 sm:p-6 space-y-4">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="bg-cc-purple/10 border border-cc-purple/40 text-cc-purplel p-3 rounded-lg text-xs text-center">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
       <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-3 text-xs">
         <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Datos del Cliente</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -63,6 +71,7 @@
           <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border
             {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
             {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+            {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
             {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
         </div>
       </div>
@@ -79,6 +88,53 @@
           {% endfor %}
         {% else %}
           <p class="text-cc-muted italic">Aún no hay pagos enlazados a esta venta.</p>
+        {% endif %}
+      </div>
+
+      <!-- Comentarios -->
+      <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-3 text-xs">
+        <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1">Comentarios</p>
+        {% if venta.comentarios %}
+          <div class="space-y-2">
+            {% for c in venta.comentarios|sort(attribute='fecha') %}
+            <div class="bg-cc-surface border border-cc-border rounded-lg p-3">
+              <div class="flex justify-between items-center gap-2 mb-1">
+                <span class="text-cc-purplel font-semibold">@{{ c.autor.username }}</span>
+                <span class="text-cc-muted text-[10px]">{{ c.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+              </div>
+              <p class="text-white break-words">{{ c.texto }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-cc-muted italic">Aún no hay comentarios.</p>
+        {% endif %}
+        <form method="POST" action="/venta/{{ venta.id }}/comentario" class="flex gap-2 pt-1">
+          <input type="text" name="texto" required placeholder="Escribe un comentario..."
+            class="flex-1 bg-cc-card border border-cc-border rounded-lg p-2.5 text-white focus:outline-none focus:border-cc-purple">
+          <button type="submit" class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-white font-semibold px-4 rounded-lg transition">Enviar</button>
+        </form>
+      </div>
+
+      <!-- Historial de cambios -->
+      <div class="bg-cc-bg border border-cc-border rounded-xl p-4 space-y-1 text-xs">
+        <p class="text-[10px] font-bold text-cc-purplel uppercase tracking-widest border-b border-cc-border pb-1 mb-2">Historial de Cambios</p>
+        {% if venta.historial %}
+          {% for h in venta.historial|sort(attribute='fecha', reverse=true) %}
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-b border-cc-border/40 py-2 last:border-0">
+            <div class="min-w-0">
+              <span class="text-white font-semibold">{{ h.campo }}</span>
+              <span class="text-cc-muted"> · @{{ h.autor.username }} · {{ h.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+            <div class="text-[11px] flex items-center gap-1 flex-wrap">
+              <span class="line-through text-red-300/70 break-all">{{ h.valor_anterior or '—' }}</span>
+              <span class="text-cc-muted">→</span>
+              <span class="text-emerald-300 break-all">{{ h.valor_nuevo or '—' }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-cc-muted italic">Sin cambios registrados.</p>
         {% endif %}
       </div>
 

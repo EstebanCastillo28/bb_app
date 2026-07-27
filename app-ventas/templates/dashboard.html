@@ -121,20 +121,28 @@
                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border
                   {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
                   {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+                  {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
                   {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
               </td>
               <td class="px-4 py-4 font-medium text-white">{{ venta.vendedor.username }}</td>
-              <td class="px-4 py-4 max-w-[150px] truncate">{{ venta.nombre_cliente }}</td>
+              <td class="px-4 py-4 max-w-[190px]">
+                <p class="truncate text-white">{{ venta.nombre_cliente }}</p>
+                <p class="text-[10px] text-cc-purplel mt-0.5">🪪 {{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
+              </td>
               <td class="px-4 py-4 font-bold text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
               <td class="px-4 py-4 text-xs">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
                   <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Ver</a>
+                  {% if session.role == 'ADMIN' or venta.usuario_id == session.user_id %}
+                  <a href="/venta/{{ venta.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Editar</a>
+                  {% endif %}
                   {% if session.role == 'ADMIN' %}
                   <form action="/venta/{{ venta.id }}/estado" method="POST" class="inline">
                     <select name="estado" onchange="this.form.submit()"
                       class="bg-cc-card border border-cc-border rounded-lg text-white text-xs px-1 py-1 focus:outline-none focus:border-cc-purple">
                       <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                       <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
+                      <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
                       <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
                     </select>
                   </form>
@@ -159,22 +167,28 @@
           <div class="flex justify-between items-start gap-2">
             <div class="min-w-0">
               <p class="text-sm font-bold text-white truncate">{{ venta.nombre_cliente }}</p>
+              <p class="text-[10px] text-cc-purplel">🪪 {{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
               <p class="text-[10px] text-cc-muted">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
             </div>
             <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap
               {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
               {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+                  {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
               {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
           </div>
           <p class="text-lg font-black text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</p>
           <div class="flex gap-2 flex-wrap">
             <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-2 px-4 rounded-lg text-xs transition">Ver adjuntos</a>
+            {% if session.role == 'ADMIN' or venta.usuario_id == session.user_id %}
+            <a href="/venta/{{ venta.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-2 px-4 rounded-lg text-xs transition">Editar</a>
+            {% endif %}
             {% if session.role == 'ADMIN' %}
             <form action="/venta/{{ venta.id }}/estado" method="POST" class="flex-1 min-w-0">
               <select name="estado" onchange="this.form.submit()"
                 class="w-full bg-cc-card border border-cc-border rounded-lg text-white text-xs px-2 py-2 focus:outline-none focus:border-cc-purple">
                 <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                 <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
+                      <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
                 <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
               </select>
             </form>

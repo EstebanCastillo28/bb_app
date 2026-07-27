@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CELUCAST · Nueva Venta</title>
+  <title>CELUCAST · Editar Venta</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -19,25 +19,30 @@
   <div class="sticky top-0 z-10 bg-cc-surface/90 backdrop-blur border-b border-cc-border px-4 py-3 flex justify-between items-center shadow-lg">
     <div class="flex items-center gap-2">
       <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white text-sm">C</div>
-      <h2 class="text-sm font-bold text-white">Registro de Venta</h2>
+      <h2 class="text-sm font-bold text-white">Editar Venta</h2>
     </div>
-    <a href="/dashboard" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
+    <a href="/venta/{{ venta.id }}" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
   </div>
+
   <div class="max-w-2xl mx-auto px-4 py-5">
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <div class="mb-4 bg-red-500/10 border border-red-500/40 text-red-300 p-3 rounded-lg text-xs text-center">{{ messages[0] }}</div>
       {% endif %}
     {% endwith %}
-    <form method="POST" enctype="multipart/form-data" class="space-y-6">
 
+    <div class="bg-cc-purple/5 border border-cc-purple/30 rounded-xl p-3 mb-5 text-[11px] text-cc-purplel">
+      ✍️ Todos los cambios quedan registrados en el <strong>historial de la venta</strong> con tu usuario y la fecha.
+    </div>
+
+    <form method="POST" class="space-y-6">
       <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3">
         <h3 class="text-[11px] font-bold text-cc-purplel border-b border-cc-border pb-2 uppercase tracking-widest flex items-center gap-2">
           <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Información del Cliente
         </h3>
         <div>
           <label class="block text-[10px] text-cc-muted mb-1">Nombre Completo *</label>
-          <input type="text" name="nombre_cliente" required value="{{ datos.get('nombre_cliente','') }}"
+          <input type="text" name="nombre_cliente" required value="{{ venta.nombre_cliente }}"
             class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
         </div>
         <div class="grid grid-cols-2 gap-3">
@@ -45,37 +50,37 @@
             <label class="block text-[10px] text-cc-muted mb-1">Tipo Doc</label>
             <select name="tipo_doc" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
               {% for t in ['C.C.', 'C.E.', 'NIT'] %}
-                <option value="{{ t }}" {% if datos.get('tipo_doc') == t %}selected{% endif %}>{{ t }}</option>
+                <option value="{{ t }}" {% if venta.tipo_doc == t %}selected{% endif %}>{{ t }}</option>
               {% endfor %}
             </select>
           </div>
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Número Documento *</label>
-            <input type="text" name="nro_doc" required value="{{ datos.get('nro_doc','') }}"
+            <input type="text" name="nro_doc" required value="{{ venta.nro_doc }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Correo</label>
-            <input type="email" name="correo" value="{{ datos.get('correo','') }}"
+            <input type="email" name="correo" value="{{ venta.correo or '' }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Teléfono</label>
-            <input type="tel" name="telefono" value="{{ datos.get('telefono','') }}"
+            <input type="tel" name="telefono" value="{{ venta.telefono or '' }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Ciudad</label>
-            <input type="text" name="ciudad" value="{{ datos.get('ciudad','') }}"
+            <input type="text" name="ciudad" value="{{ venta.ciudad or '' }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Dirección Completa</label>
-            <input type="text" name="direccion" value="{{ datos.get('direccion','') }}"
+            <input type="text" name="direccion" value="{{ venta.direccion or '' }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
@@ -88,52 +93,32 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Monto Financiado *</label>
-            <input type="number" step="0.01" name="monto_financiado" required value="{{ datos.get('monto_financiado','') }}"
+            <input type="number" step="0.01" name="monto_financiado" required value="{{ venta.monto_financiado }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
           <div>
             <label class="block text-[10px] text-cc-muted mb-1">Número de Cuotas *</label>
-            <input type="number" name="cantidad_cuotas" required value="{{ datos.get('cantidad_cuotas','') }}"
+            <input type="number" name="cantidad_cuotas" required value="{{ venta.cantidad_cuotas }}"
               class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div>
           <label class="block text-[10px] text-cc-muted mb-1">Producto Adquirido *</label>
-          <input type="text" name="producto_financiado" required value="{{ datos.get('producto_financiado','') }}"
+          <input type="text" name="producto_financiado" required value="{{ venta.producto_financiado }}"
             class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
         </div>
         <div>
           <label class="block text-[10px] text-cc-muted mb-1">Observaciones</label>
           <textarea name="observaciones" rows="3"
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">{{ datos.get('observaciones','') }}</textarea>
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">{{ venta.observaciones or '' }}</textarea>
         </div>
       </div>
 
-      <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3">
-        <h3 class="text-[11px] font-bold text-cc-purplel border-b border-cc-border pb-2 uppercase tracking-widest flex items-center gap-2">
-          <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Soportes Digitales <span class="text-cc-muted normal-case font-normal">(Máx. 4.5MB combinados)</span>
-        </h3>
-        <div class="space-y-2">
-          {% set archivos = [
-            ('foto_documento', 'Foto Documento Cliente'),
-            ('acta_entrega', 'Acta de Entrega Firmada'),
-            ('foto_cliente_producto', 'Foto del Cliente con el Producto'),
-            ('captura_aprobacion', 'Captura Aprobación Crédito'),
-            ('anexos_adicionales', 'Anexos Adicionales')
-          ] %}
-          {% for name, label in archivos %}
-          <div class="bg-cc-card border border-cc-border rounded-lg p-3">
-            <label class="block text-[10px] text-cc-muted mb-2">{{ label }}</label>
-            <input type="file" name="{{ name }}" accept="image/*,application/pdf" class="w-full text-cc-muted text-xs file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-cc-purple file:text-white file:text-xs file:font-semibold">
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="fixed bottom-0 left-0 right-0 p-4 bg-cc-bg/95 backdrop-blur border-t border-cc-border sm:static sm:p-0 sm:bg-transparent sm:border-0">
+      <div class="fixed bottom-0 left-0 right-0 p-4 bg-cc-bg/95 backdrop-blur border-t border-cc-border sm:static sm:p-0 sm:bg-transparent sm:border-0 flex gap-3">
+        <a href="/venta/{{ venta.id }}" class="flex-1 text-center bg-cc-elevated border border-cc-border text-white text-sm font-bold py-3 rounded-lg transition hover:bg-cc-border">Cancelar</a>
         <button type="submit"
-          class="w-full bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-white text-sm font-bold py-3 rounded-lg shadow-lg shadow-cc-purple/30 cursor-pointer transition">
-          GUARDAR REGISTRO DE VENTA
+          class="flex-1 bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-white text-sm font-bold py-3 rounded-lg shadow-lg shadow-cc-purple/30 cursor-pointer transition">
+          GUARDAR CAMBIOS
         </button>
       </div>
     </form>
