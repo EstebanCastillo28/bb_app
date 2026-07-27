@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CELUCAST · Editar Pago</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
+      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+    } } }
+  </script>
+  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
+</head>
+<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col justify-center items-center px-4 py-8">
+  <div class="max-w-md w-full bg-cc-surface border border-cc-border rounded-2xl shadow-2xl overflow-hidden">
+    <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
+    <div class="p-6 space-y-5">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white text-sm">C</div>
+          <h2 class="text-sm font-bold text-white">Editar Pago / Comisión</h2>
+        </div>
+        <a href="/pago/{{ pago.id }}" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
+      </div>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="bg-red-500/10 border border-red-500/40 text-red-300 p-3 rounded-lg text-xs text-center">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Asignar a Vendedor</label>
+          <select id="vendedorSelect" name="vendedor_id" onchange="filtrarVentas()" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            {% for v in vendedores %}
+              <option value="{{ v.id }}" {% if v.id == pago.usuario_id %}selected{% endif %}>{{ v.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Enlazar con una Venta <span class="text-cc-muted normal-case font-normal">(opcional)</span></label>
+          <select id="ventaSelect" name="venta_id" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            <option value="">— Sin enlazar (pago general) —</option>
+            {% for venta in ventas %}
+              <option value="{{ venta.id }}" data-vendedor="{{ venta.usuario_id }}" {% if venta.id == pago.venta_id %}selected{% endif %}>
+                {{ venta.nombre_cliente }} · ${{ "{:,.0f}".format(venta.monto_financiado) }} · {{ venta.fecha.strftime('%d/%m/%Y') }}
+              </option>
+            {% endfor %}
+          </select>
+          <p id="ventaHint" class="text-[10px] text-cc-muted mt-1">Se muestran solo las ventas del vendedor seleccionado. Al enlazar, la venta pasa a VENTA PAGA.</p>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Monto del Pago ($)</label>
+          <input type="number" step="0.01" name="monto" required value="{{ pago.monto }}"
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+        </div>
+        <div>
+          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Detalle o Concepto</label>
+          <textarea name="observaciones" rows="3"
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">{{ pago.observaciones or '' }}</textarea>
+        </div>
+        <div>
+          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Comprobante Digital</label>
+          <p class="text-[10px] text-cc-muted mb-1">
+            {% if pago.comprobante %}Ya hay un comprobante cargado. Sube uno nuevo solo si quieres reemplazarlo.{% else %}No hay comprobante. Puedes adjuntar uno.{% endif %}
+          </p>
+          <input type="file" name="comprobante" accept="image/*,application/pdf"
+            class="w-full text-cc-muted text-sm bg-cc-card border border-cc-border rounded-lg p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-cc-purple file:text-white file:text-xs file:font-semibold">
+        </div>
+        <div class="flex gap-3 pt-1">
+          <a href="/pago/{{ pago.id }}" class="flex-1 text-center bg-cc-elevated border border-cc-border text-white text-xs font-bold py-3 rounded-lg transition hover:bg-cc-border">Cancelar</a>
+          <button type="submit"
+            class="flex-1 bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-white text-xs font-bold py-3 rounded-lg shadow-lg shadow-cc-purple/30 cursor-pointer transition">
+            GUARDAR CAMBIOS
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function filtrarVentas() {
+      const vendedor = document.getElementById('vendedorSelect').value;
+      const ventaSel = document.getElementById('ventaSelect');
+      let visibles = 0;
+      for (const opt of ventaSel.options) {
+        if (!opt.value) { opt.hidden = false; continue; }
+        const match = opt.getAttribute('data-vendedor') === vendedor;
+        opt.hidden = !match;
+        if (match) visibles++;
+      }
+      const cur = ventaSel.selectedOptions[0];
+      if (cur && cur.value && cur.hidden) ventaSel.value = "";
+      document.getElementById('ventaHint').textContent = visibles
+        ? 'Se muestran solo las ventas del vendedor seleccionado. Al enlazar, la venta pasa a VENTA PAGA.'
+        : 'Este vendedor no tiene ventas registradas.';
+    }
+    document.addEventListener('DOMContentLoaded', filtrarVentas);
+  </script>
+</body>
+</html>

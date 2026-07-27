@@ -26,7 +26,12 @@
           &nbsp;·&nbsp; {{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}
         </p>
       </div>
-      <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        {% if session.role == 'ADMIN' %}
+        <a href="/pago/{{ pago.id }}/editar" class="text-xs bg-cc-purple/20 border border-cc-purple/40 px-3 py-2 rounded-lg text-cc-purplel hover:bg-cc-purple/30 whitespace-nowrap transition">✏️ Editar</a>
+        {% endif %}
+        <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
+      </div>
     </div>
     <div class="p-4 sm:p-6 space-y-4">
       <div class="bg-cc-bg border border-cc-border p-4 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">

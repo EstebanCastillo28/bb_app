@@ -243,6 +243,7 @@
                 <div class="flex items-center justify-center gap-2">
                   <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-1 px-3 rounded-lg font-semibold transition">Ver Recibo</a>
                   {% if session.role == 'ADMIN' %}
+                  <a href="/pago/{{ pago.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-1 px-3 rounded-lg transition">Editar</a>
                   <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir este pago?')" class="inline">
                     <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-1 px-2 rounded-lg transition">Revertir</button>
                   </form>
@@ -275,6 +276,7 @@
           <div class="flex gap-2">
             <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-2 px-4 rounded-lg font-semibold text-xs transition">Ver Recibo</a>
             {% if session.role == 'ADMIN' %}
+            <a href="/pago/{{ pago.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-2 px-4 rounded-lg text-xs transition">Editar</a>
             <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Revertir este pago?')">
               <button type="submit" class="bg-red-500/10 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 font-semibold py-2 px-3 rounded-lg text-xs transition">Revertir</button>
             </form>

@@ -373,6 +373,38 @@ def eliminar_venta(id):
     return redirect(url_for("dashboard"))
 
 
+@app.route("/pago/<int:id>/editar", methods=["GET", "POST"])
+def editar_pago(id):
+    if "user_id" not in session or session["role"] != "ADMIN":
+        return redirect(url_for("login"))
+    pago       = Pago.query.get_or_404(id)
+    vendedores = Usuario.query.filter_by(role="VENDEDOR").all()
+    ventas     = Venta.query.order_by(Venta.fecha.desc()).all()
+    if request.method == "POST":
+        try:
+            venta_id_raw       = request.form.get("venta_id")
+            pago.monto         = float(request.form.get("monto"))
+            pago.observaciones = request.form.get("observaciones")
+            pago.usuario_id    = int(request.form.get("vendedor_id"))
+            pago.venta_id      = int(venta_id_raw) if venta_id_raw else None
+            # El comprobante solo se reemplaza si se sube un archivo nuevo.
+            nuevo_comprobante = procesar_archivo("comprobante")
+            if nuevo_comprobante:
+                pago.comprobante = nuevo_comprobante
+            # Si queda enlazado a una venta, esa venta pasa a VENTA PAGA.
+            if pago.venta_id:
+                venta_enlazada = Venta.query.get(pago.venta_id)
+                if venta_enlazada:
+                    venta_enlazada.estado = "VENTA PAGA"
+            db.session.commit()
+            flash("Pago actualizado correctamente.", "success")
+            return redirect(url_for("detalle_pago", id=pago.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al actualizar el pago: {str(e)}", "error")
+    return render_template("editar_pago.html", pago=pago, vendedores=vendedores, ventas=ventas)
+
+
 @app.route("/pago/<int:id>/eliminar", methods=["POST"])
 def eliminar_pago(id):
     if "user_id" not in session or session["role"] != "ADMIN":
