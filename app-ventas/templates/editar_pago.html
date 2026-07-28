@@ -103,6 +103,46 @@
         : 'Este vendedor no tiene ventas registradas.';
     }
     document.addEventListener('DOMContentLoaded', filtrarVentas);
+
+    // Comprime el comprobante (si es imagen) para no superar el límite de 4.5 MB de Vercel.
+    async function comprimirImagen(file, maxLado = 1600, calidad = 0.7) {
+      if (!file.type || !file.type.startsWith('image/')) return file;
+      try {
+        const dataUrl = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); });
+        const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+        let w = img.width, h = img.height;
+        if (w > maxLado || h > maxLado) { if (w >= h) { h = Math.round(h * maxLado / w); w = maxLado; } else { w = Math.round(w * maxLado / h); h = maxLado; } }
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', calidad));
+        if (!blob || blob.size >= file.size) return file;
+        return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+      } catch (e) { return file; }
+    }
+    (function () {
+      const form = document.querySelector('form'); if (!form) return;
+      let listo = false;
+      form.addEventListener('submit', async function (e) {
+        if (listo) return;
+        e.preventDefault();
+        const boton = form.querySelector('button[type=submit]'); const txt = boton ? boton.textContent : '';
+        if (boton) { boton.disabled = true; boton.textContent = 'Optimizando...'; }
+        try {
+          let total = 0;
+          for (const input of form.querySelectorAll('input[type=file]')) {
+            if (!input.files.length) continue;
+            const dt = new DataTransfer();
+            for (const f of input.files) { const c = await comprimirImagen(f); dt.items.add(c); total += c.size; }
+            input.files = dt.files;
+          }
+          if (total > 4.3 * 1024 * 1024) {
+            alert('El comprobante pesa ' + (total / 1048576).toFixed(1) + ' MB (máximo ~4.3 MB). Usa una foto o un PDF más liviano.');
+            if (boton) { boton.disabled = false; boton.textContent = txt; } return;
+          }
+          listo = true; form.submit();
+        } catch (err) { if (boton) { boton.disabled = false; boton.textContent = txt; } form.submit(); }
+      });
+    })();
   </script>
 </body>
 </html>
