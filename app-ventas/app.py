@@ -26,6 +26,8 @@ class Usuario(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role     = db.Column(db.String(20), nullable=False)
+    # Usuario congelado = activo False: no puede iniciar sesión, pero conserva sus datos.
+    activo   = db.Column(db.Boolean, default=True, nullable=False)
     ventas   = db.relationship('Venta', backref='vendedor', lazy=True, cascade="all, delete-orphan")
     pagos    = db.relationship('Pago',  backref='vendedor', lazy=True, cascade="all, delete-orphan")
 
@@ -98,12 +100,19 @@ def init_db():
             "ALTER TABLE venta ADD COLUMN estado VARCHAR(30) DEFAULT 'PENDIENTE'",
             "ALTER TABLE pago ADD COLUMN comprobante TEXT",
             "ALTER TABLE pago ADD COLUMN venta_id INTEGER",
+            "ALTER TABLE usuario ADD COLUMN activo BOOLEAN DEFAULT true",
         ):
             try:
                 db.session.execute(db.text(ddl))
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+        # Asegura que los usuarios existentes queden activos tras agregar la columna.
+        try:
+            db.session.execute(db.text("UPDATE usuario SET activo = true WHERE activo IS NULL"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         if not Usuario.query.filter_by(username="admin").first():
             db.session.add(Usuario(
                 username="admin",
@@ -163,11 +172,15 @@ def login():
         password = request.form.get("password").strip()
         user = Usuario.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            session["user_id"]  = user.id
-            session["username"] = user.username
-            session["role"]     = user.role
-            return redirect(url_for("dashboard"))
-        flash("Credenciales incorrectas.", "error")
+            if user.activo is False:
+                flash("Tu cuenta está congelada. Contacta al administrador.", "error")
+            else:
+                session["user_id"]  = user.id
+                session["username"] = user.username
+                session["role"]     = user.role
+                return redirect(url_for("dashboard"))
+        else:
+            flash("Credenciales incorrectas.", "error")
     return render_template("login.html")
 
 
@@ -420,26 +433,94 @@ def eliminar_pago(id):
     return redirect(url_for("dashboard"))
 
 
-@app.route("/admin/usuario", methods=["GET", "POST"])
-def crear_usuario():
+@app.route("/admin/usuarios", methods=["GET", "POST"])
+def admin_usuarios():
     if "user_id" not in session or session["role"] != "ADMIN":
         return redirect(url_for("login"))
     if request.method == "POST":
-        username = request.form.get("username").strip()
-        password = request.form.get("password").strip()
+        username = (request.form.get("username") or "").strip()
+        password = (request.form.get("password") or "").strip()
         role     = request.form.get("role")
-        if Usuario.query.filter_by(username=username).first():
+        if not username or not password:
+            flash("Usuario y contraseña son obligatorios.", "error")
+        elif Usuario.query.filter_by(username=username).first():
             flash("El nombre de usuario ya existe.", "error")
         else:
             db.session.add(Usuario(
                 username=username,
                 password=generate_password_hash(password),
-                role=role
+                role=role if role in ("ADMIN", "VENDEDOR") else "VENDEDOR",
+                activo=True
             ))
             db.session.commit()
             flash(f"Usuario @{username} creado con éxito.", "success")
-            return redirect(url_for("dashboard"))
-    return render_template("nuevo_usuario.html")
+        return redirect(url_for("admin_usuarios"))
+    usuarios = Usuario.query.order_by(Usuario.role, Usuario.username).all()
+    return render_template("usuarios.html", usuarios=usuarios)
+
+
+# Compatibilidad: la ruta antigua ahora lleva al nuevo panel.
+@app.route("/admin/usuario")
+def crear_usuario():
+    return redirect(url_for("admin_usuarios"))
+
+
+@app.route("/admin/usuario/<int:id>/editar", methods=["POST"])
+def editar_usuario(id):
+    if "user_id" not in session or session["role"] != "ADMIN":
+        return redirect(url_for("login"))
+    u = Usuario.query.get_or_404(id)
+    nuevo_username = (request.form.get("username") or "").strip()
+    nuevo_role     = request.form.get("role")
+    nueva_pass     = (request.form.get("password") or "").strip()
+    if nuevo_username and nuevo_username != u.username:
+        if Usuario.query.filter(Usuario.username == nuevo_username, Usuario.id != u.id).first():
+            flash("Ese nombre de usuario ya está en uso.", "error")
+            return redirect(url_for("admin_usuarios"))
+        u.username = nuevo_username
+    if nuevo_role in ("ADMIN", "VENDEDOR"):
+        u.role = nuevo_role
+    if nueva_pass:
+        u.password = generate_password_hash(nueva_pass)
+    db.session.commit()
+    flash(f"Usuario @{u.username} actualizado.", "success")
+    return redirect(url_for("admin_usuarios"))
+
+
+@app.route("/admin/usuario/<int:id>/congelar", methods=["POST"])
+def congelar_usuario(id):
+    if "user_id" not in session or session["role"] != "ADMIN":
+        return redirect(url_for("login"))
+    u = Usuario.query.get_or_404(id)
+    if u.id == session["user_id"]:
+        flash("No puedes congelar tu propia cuenta.", "error")
+        return redirect(url_for("admin_usuarios"))
+    u.activo = not bool(u.activo)
+    db.session.commit()
+    flash(f"Usuario @{u.username} {'reactivado' if u.activo else 'congelado'}.", "success")
+    return redirect(url_for("admin_usuarios"))
+
+
+@app.route("/admin/usuario/<int:id>/eliminar", methods=["POST"])
+def eliminar_usuario(id):
+    if "user_id" not in session or session["role"] != "ADMIN":
+        return redirect(url_for("login"))
+    u = Usuario.query.get_or_404(id)
+    if u.id == session["user_id"]:
+        flash("No puedes eliminar tu propia cuenta.", "error")
+        return redirect(url_for("admin_usuarios"))
+    n_ventas, n_pagos = len(u.ventas), len(u.pagos)
+    if n_ventas or n_pagos:
+        flash(
+            f"No se eliminó: @{u.username} tiene {n_ventas} venta(s) y {n_pagos} pago(s) asociados. "
+            f"Congélalo para bloquear su acceso sin borrar información.",
+            "error"
+        )
+        return redirect(url_for("admin_usuarios"))
+    db.session.delete(u)
+    db.session.commit()
+    flash(f"Usuario @{u.username} eliminado.", "success")
+    return redirect(url_for("admin_usuarios"))
 
 
 @app.route("/admin/pago", methods=["GET", "POST"])

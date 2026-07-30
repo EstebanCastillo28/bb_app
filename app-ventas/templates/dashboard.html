@@ -29,7 +29,7 @@
       </div>
       <div class="flex gap-2 overflow-x-auto flex-shrink-0" style="-webkit-overflow-scrolling:touch;">
         {% if session.role == 'ADMIN' %}
-          <a href="/admin/usuario" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap border border-cc-border transition">+ Usuario</a>
+          <a href="/admin/usuarios" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap border border-cc-border transition">Usuarios</a>
           <a href="/admin/pago"    class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Pago</a>
         {% else %}
           <a href="/venta/nueva"   class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Venta</a>
