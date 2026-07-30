@@ -154,12 +154,14 @@ CAMPOS_EDITABLES = [
 ]
 
 
-def buscar_cedula_duplicada(nro_doc, excluir_id=None):
-    """Devuelve la primera venta con la misma cédula (nro_doc), o None.
+def buscar_venta_duplicada(nro_doc, monto, excluir_id=None):
+    """Devuelve una venta duplicada, o None. Duplicado = MISMA cédula (nro_doc)
+    Y MISMO monto financiado. Así un mismo cliente puede tener varias ventas
+    (con montos distintos), pero se evita cargar dos veces la misma venta.
     Se puede excluir una venta (útil al editar la venta actual)."""
     if not nro_doc:
         return None
-    q = Venta.query.filter_by(nro_doc=nro_doc)
+    q = Venta.query.filter_by(nro_doc=nro_doc, monto_financiado=monto)
     if excluir_id is not None:
         q = q.filter(Venta.id != excluir_id)
     return q.first()
@@ -223,12 +225,14 @@ def nueva_venta():
     if request.method == "POST":
         try:
             nro_doc = (request.form.get("nro_doc") or "").strip()
-            duplicada = buscar_cedula_duplicada(nro_doc)
+            monto   = float(request.form.get("monto_financiado"))
+            duplicada = buscar_venta_duplicada(nro_doc, monto)
             if duplicada:
                 flash(
-                    f"No se guardó: la cédula {nro_doc} ya está registrada en la venta de "
-                    f"«{duplicada.nombre_cliente}» (@{duplicada.vendedor.username}, "
-                    f"{duplicada.fecha.strftime('%d/%m/%Y')}).",
+                    f"No se guardó: ya existe una venta de «{duplicada.nombre_cliente}» con la "
+                    f"cédula {nro_doc} por el mismo monto (${'{:,.2f}'.format(monto)}), "
+                    f"cargada el {duplicada.fecha.strftime('%d/%m/%Y')}. "
+                    f"Si es otra compra distinta, cambia el monto financiado.",
                     "error"
                 )
                 return render_template("nueva_venta.html", datos=request.form)
@@ -240,7 +244,7 @@ def nueva_venta():
                 telefono              = request.form.get("telefono"),
                 direccion             = request.form.get("direccion"),
                 ciudad                = request.form.get("ciudad"),
-                monto_financiado      = float(request.form.get("monto_financiado")),
+                monto_financiado      = monto,
                 cantidad_cuotas       = int(request.form.get("cantidad_cuotas")),
                 producto_financiado   = request.form.get("producto_financiado"),
                 observaciones         = request.form.get("observaciones"),
@@ -286,12 +290,13 @@ def editar_venta(id):
     if request.method == "POST":
         try:
             nro_doc = (request.form.get("nro_doc") or "").strip()
-            duplicada = buscar_cedula_duplicada(nro_doc, excluir_id=venta.id)
+            monto   = float(request.form.get("monto_financiado"))
+            duplicada = buscar_venta_duplicada(nro_doc, monto, excluir_id=venta.id)
             if duplicada:
                 flash(
-                    f"No se guardó: la cédula {nro_doc} ya está registrada en la venta de "
-                    f"«{duplicada.nombre_cliente}» (@{duplicada.vendedor.username}, "
-                    f"{duplicada.fecha.strftime('%d/%m/%Y')}).",
+                    f"No se guardó: ya existe otra venta de «{duplicada.nombre_cliente}» con la "
+                    f"cédula {nro_doc} por el mismo monto (${'{:,.2f}'.format(monto)}). "
+                    f"Si es una compra distinta, usa un monto financiado diferente.",
                     "error"
                 )
                 return render_template("editar_venta.html", venta=venta, campos=CAMPOS_EDITABLES)
