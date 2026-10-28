@@ -4,18 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CELUCAST · Panel</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
-      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
-    } } }
-  </script>
-  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
+  {% include '_head.html' %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
-<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col">
+{% macro badge(estado) -%}
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap
+  {% if estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
+  {% elif estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
+  {% elif estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
+  {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ estado }}</span>
+{%- endmacro %}
+{% macro ico_id() -%}<svg class="inline-block -mt-0.5 mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16c.5-1.5 5.5-1.5 6 0"/></svg>{%- endmacro %}
+{% macro ico_link() -%}<svg class="inline-block -mt-0.5 mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>{%- endmacro %}
+{% macro money(n) -%}${{ "{:,.0f}".format(n) }}{%- endmacro %}
+<body class="bg-cc-bg text-cc-fg min-h-screen flex flex-col">
   <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
 
   <header class="bg-cc-surface/90 backdrop-blur border-b border-cc-border py-3 px-4 sm:px-8 sticky top-0 z-20">
@@ -23,23 +25,23 @@
       <div class="flex items-center gap-3 min-w-0">
         <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white shadow-lg shadow-cc-purple/30 flex-shrink-0">C</div>
         <div class="leading-none min-w-0">
-          <p class="text-sm font-black tracking-tight text-white truncate">CELUCAST</p>
-          <p class="text-[10px] text-cc-muted truncate">{{ session.username }} · {{ session.role }}</p>
+          <p class="text-sm font-black tracking-tight text-cc-fg truncate">CELUCAST</p>
+          <p class="text-[11px] text-cc-muted truncate">{{ session.username }} · {{ session.role }}</p>
         </div>
       </div>
-      <div class="flex gap-2 overflow-x-auto flex-shrink-0" style="-webkit-overflow-scrolling:touch;">
+      <div class="flex gap-2 flex-shrink-0">
         {% if session.role == 'ADMIN' %}
-          <a href="/admin/usuarios" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap border border-cc-border transition">Usuarios</a>
+          <a href="/admin/usuarios" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-cc-fg whitespace-nowrap border border-cc-border transition">Usuarios</a>
           <a href="/admin/pago"    class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Pago</a>
         {% else %}
           <a href="/venta/nueva"   class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Venta</a>
         {% endif %}
-        <a href="/logout" class="bg-cc-card hover:bg-red-600/80 border border-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap transition">Salir</a>
+        <a href="/logout" class="bg-cc-card hover:bg-red-600 hover:text-white border border-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-cc-fg whitespace-nowrap transition">Salir</a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 flex-grow">
+  <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-grow">
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -47,99 +49,169 @@
       {% endif %}
     {% endwith %}
 
-    <!-- KPIs -->
-    <div class="grid {% if session.role == 'ADMIN' %}grid-cols-2{% else %}grid-cols-1{% endif %} gap-4">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-cc-fg">
+          {% if session.role == 'ADMIN' %}Panel de ventas{% else %}Hola, {{ session.username }}{% endif %}
+        </h1>
+        <p class="text-xs text-cc-muted mt-1">Resumen de los últimos 12 meses. Las ventas «No ingreso» no se cuentan.</p>
+      </div>
       {% if session.role == 'ADMIN' %}
-      <div class="relative bg-cc-surface border border-cc-border p-5 rounded-xl overflow-hidden">
-        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cc-purple/10 blur-2xl"></div>
-        <p class="text-[10px] font-semibold text-cc-muted tracking-widest uppercase">Monto Total Aprobado Global</p>
-        <p class="text-xl sm:text-3xl font-black text-white mt-2">${{ "{:,.2f}".format(total_subido) }}</p>
-      </div>
+      <form method="GET" action="/dashboard" class="flex gap-2 items-center">
+        <label for="vendedorid" class="sr-only">Filtrar por vendedor</label>
+        <select id="vendedorid" name="vendedorid" onchange="this.form.submit()" class="bg-cc-surface border border-cc-border rounded-lg px-3 py-2 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
+          <option value="">Todos los vendedores</option>
+          {% for vend in vendedores %}
+            <option value="{{ vend.id }}" {% if filtro_vendedor == vend.id|string %}selected{% endif %}>{{ vend.username }}</option>
+          {% endfor %}
+        </select>
+        <noscript><button type="submit" class="bg-cc-elevated border border-cc-border px-3 py-2 text-xs font-semibold rounded-lg">Ver</button></noscript>
+      </form>
       {% endif %}
-      <div class="relative bg-gradient-to-br from-cc-card to-cc-surface border border-cc-purple/40 p-5 rounded-xl overflow-hidden">
-        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fuchsia-500/10 blur-2xl"></div>
-        <p class="text-[10px] font-semibold text-cc-purplel tracking-widest uppercase">
-          {% if session.role == 'ADMIN' %}Monto Pagado a Vendedores{% else %}Mis Comisiones Recibidas / Pagadas{% endif %}
-        </p>
-        <p class="text-xl sm:text-3xl font-black text-cc-purplel mt-2">${{ "{:,.2f}".format(total_pagado) }}</p>
-      </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="bg-cc-surface border border-cc-border p-4 rounded-xl space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
-      {% if session.role == 'ADMIN' %}
-      <form method="GET" action="/dashboard" class="space-y-2">
-        <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest">Filtrar por Vendedor</label>
-        <div class="flex gap-2">
-          <select name="vendedorid" class="bg-cc-card border border-cc-border rounded-lg px-3 py-2 text-sm w-full text-white focus:outline-none focus:border-cc-purple">
-            <option value="">Todos los vendedores</option>
-            {% for vend in vendedores %}
-              <option value="{{ vend.id }}" {% if filtro_vendedor == vend.id|string %}selected{% endif %}>{{ vend.username }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="bg-cc-elevated hover:bg-cc-border border border-cc-border px-4 py-2 text-xs font-semibold rounded-lg text-white cursor-pointer whitespace-nowrap transition">Ver</button>
+    <!-- Indicadores -->
+    <section aria-label="Indicadores" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-cc-surface border border-cc-border p-4 rounded-xl">
+        <p class="text-[11px] font-semibold text-cc-muted uppercase tracking-wider">Vendido este mes</p>
+        <p class="text-xl sm:text-2xl font-black text-cc-fg mt-2">{{ money(stats.monto_mes) }}</p>
+        {% if stats.variacion is not none %}
+          <p class="text-[11px] mt-1 font-semibold {% if stats.variacion >= 0 %}text-emerald-300{% else %}text-red-300{% endif %}">
+            {% if stats.variacion >= 0 %}▲{% else %}▼{% endif %} {{ stats.variacion|abs }}% vs mes anterior
+          </p>
+        {% else %}
+          <p class="text-[11px] mt-1 text-cc-muted">Sin mes anterior para comparar</p>
+        {% endif %}
+      </div>
+      <div class="bg-cc-surface border border-cc-border p-4 rounded-xl">
+        <p class="text-[11px] font-semibold text-cc-muted uppercase tracking-wider">Ventas este mes</p>
+        <p class="text-xl sm:text-2xl font-black text-cc-fg mt-2">{{ stats.ventas_mes }}</p>
+        <p class="text-[11px] mt-1 text-cc-muted">Ticket promedio {{ money(stats.ticket) }}</p>
+      </div>
+      <div class="bg-cc-surface border border-cc-border p-4 rounded-xl">
+        <p class="text-[11px] font-semibold text-cc-muted uppercase tracking-wider">
+          {% if session.role == 'ADMIN' %}Aprobado global{% else %}Total vendido{% endif %}
+        </p>
+        <p class="text-xl sm:text-2xl font-black text-cc-fg mt-2">{{ money(total_subido) }}</p>
+        <p class="text-[11px] mt-1 text-cc-muted">{{ stats.tasa_pago }}% ya pagadas</p>
+      </div>
+      <div class="bg-cc-surface border border-cc-purple/40 p-4 rounded-xl">
+        <p class="text-[11px] font-semibold text-cc-purplel uppercase tracking-wider">
+          {% if session.role == 'ADMIN' %}Pagado a vendedores{% else %}Mis comisiones pagadas{% endif %}
+        </p>
+        <p class="text-xl sm:text-2xl font-black text-cc-purplel mt-2">{{ money(total_pagado) }}</p>
+        <p class="text-[11px] mt-1 text-cc-muted">{{ pagos|length }} pago{{ '' if pagos|length == 1 else 's' }}</p>
+      </div>
+    </section>
+
+    <!-- Gráficas -->
+    <section aria-label="Gráficas" class="grid lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 bg-cc-surface border border-cc-border rounded-xl p-4">
+        <div class="flex items-baseline justify-between gap-2 mb-3">
+          <h2 class="text-sm font-bold text-cc-fg">Ventas por mes</h2>
+          {% if stats.mejor_mes %}<p class="text-[11px] text-cc-muted">Mejor mes: <span class="font-semibold text-cc-purplel">{{ stats.mejor_mes }}</span> · {{ money(stats.mejor_monto) }}</p>{% endif %}
         </div>
-      </form>
-      {% endif %}
-      <form method="POST" action="/download-report" class="space-y-2">
-        <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest">Descargar Informe Excel</label>
-        <input type="hidden" name="vendedoridexcel" value="{{ filtro_vendedor or '' }}">
-        <div class="grid grid-cols-2 gap-2">
-          <input type="date" name="fechadesde" class="bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-white w-full focus:outline-none focus:border-cc-purple">
-          <input type="date" name="fechahasta" class="bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-white w-full focus:outline-none focus:border-cc-purple">
-        </div>
-        <button type="submit" class="w-full bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-bold py-2 rounded-lg text-white cursor-pointer shadow shadow-cc-purple/30 transition">
-          Descargar Rango Seleccionado
-        </button>
-      </form>
-    </div>
+        <div class="relative h-64"><canvas id="chartMeses" role="img" aria-label="Monto vendido por mes"></canvas></div>
+      </div>
+
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4">
+        <h2 class="text-sm font-bold text-cc-fg mb-3">Meses más vendidos</h2>
+        {% if stats.ranking_meses %}
+        <ol class="space-y-3">
+          {% for r in stats.ranking_meses %}
+          <li>
+            <div class="flex items-baseline justify-between gap-2 text-xs">
+              <span class="font-semibold text-cc-fg"><span class="text-cc-muted font-medium mr-1.5">{{ loop.index }}.</span>{{ r.mes }}</span>
+              <span class="font-bold text-cc-purplel">{{ money(r.monto) }}</span>
+            </div>
+            <div class="mt-1 h-1.5 rounded-full bg-cc-elevated overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-cc-purple to-fuchsia-500" style="width: {{ (r.monto / stats.ranking_meses[0].monto * 100)|round|int }}%"></div></div>
+            <p class="text-[11px] text-cc-muted mt-0.5">{{ r.n }} venta{{ '' if r.n == 1 else 's' }}</p>
+          </li>
+          {% endfor %}
+        </ol>
+        {% else %}
+          <p class="text-xs text-cc-muted py-6 text-center">Aún no hay ventas para clasificar.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4">
+        <h2 class="text-sm font-bold text-cc-fg mb-3">Ventas por estado</h2>
+        <div class="relative h-52"><canvas id="chartEstados" role="img" aria-label="Cantidad de ventas por estado"></canvas></div>
+      </div>
+
+      <div class="lg:col-span-2 bg-cc-surface border border-cc-border rounded-xl p-4">
+        <h2 class="text-sm font-bold text-cc-fg mb-3">{% if session.role == 'ADMIN' %}Ventas por asesor{% else %}Cantidad de ventas por mes{% endif %}</h2>
+        <div class="relative h-52"><canvas id="chartSecundaria" role="img" aria-label="{% if session.role == 'ADMIN' %}Monto vendido por asesor{% else %}Cantidad de ventas por mes{% endif %}"></canvas></div>
+      </div>
+    </section>
 
     <!-- VENTAS -->
-    <div class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
-      <div class="bg-cc-card px-4 py-3 border-b border-cc-border text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-        <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Historial General de Ventas
+    <section class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-cc-border flex flex-wrap items-center gap-3 justify-between">
+        <h2 class="text-sm font-bold text-cc-fg flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-cc-purple"></span> Historial de ventas <span id="contadorVentas" class="text-xs font-medium text-cc-muted"></span></h2>
+        <div class="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+          <label for="buscarVenta" class="sr-only">Buscar venta</label>
+          <input id="buscarVenta" type="search" placeholder="Buscar cliente, documento o asesor"
+            class="flex-1 sm:w-64 bg-cc-card border border-cc-border rounded-lg px-3 py-2 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
+          <details class="relative">
+            <summary class="list-none cursor-pointer bg-cc-elevated hover:bg-cc-border border border-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-cc-fg whitespace-nowrap transition">Exportar Excel</summary>
+            <form method="POST" action="/download-report" class="absolute right-0 mt-2 w-72 z-10 bg-cc-surface border border-cc-border rounded-xl p-4 space-y-3 shadow-xl">
+              {% if session.role == 'ADMIN' %}<input type="hidden" name="vendedoridexcel" value="{{ filtro_vendedor or '' }}">{% endif %}
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-[11px] text-cc-muted mb-1">Desde</label><input type="date" name="fechadesde" class="w-full bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-cc-fg"></div>
+                <div><label class="block text-[11px] text-cc-muted mb-1">Hasta</label><input type="date" name="fechahasta" class="w-full bg-cc-card border border-cc-border rounded-lg px-2 py-2 text-xs text-cc-fg"></div>
+              </div>
+              <button type="submit" class="w-full bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-bold py-2 rounded-lg text-white cursor-pointer transition">Descargar</button>
+            </form>
+          </details>
+        </div>
+      </div>
+
+      <div id="chipsEstado" class="px-4 py-3 border-b border-cc-border flex gap-2 overflow-x-auto">
+        {% set chips = [('', 'Todas'), ('PENDIENTE', 'Pendiente'), ('REVISADO', 'Revisado'), ('VENTA PAGA', 'Venta paga'), ('NO INGRESO', 'No ingreso')] %}
+        {% for val, lbl in chips %}
+        <button type="button" data-estado="{{ val }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"
+          class="chip whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-full border border-cc-border text-cc-muted hover:text-cc-fg transition">
+          {{ lbl }} <span class="opacity-70">{{ ventas|length if loop.first else stats.estados.get(val, 0) }}</span>
+        </button>
+        {% endfor %}
       </div>
 
       <!-- Escritorio -->
       <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-300">
+        <table class="w-full text-left text-sm text-cc-fg/80">
           <thead class="bg-cc-card/60 text-[11px] uppercase text-cc-muted border-b border-cc-border tracking-wider">
             <tr>
               <th class="px-4 py-3">Fecha</th>
               <th class="px-4 py-3">Estado</th>
               <th class="px-4 py-3">Vendedor</th>
               <th class="px-4 py-3">Cliente</th>
-              <th class="px-4 py-3">Monto</th>
+              <th class="px-4 py-3 text-right">Monto</th>
               <th class="px-4 py-3 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-cc-border">
             {% for venta in ventas %}
-            <tr class="hover:bg-cc-card/60 transition {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
-              <td class="px-4 py-4 text-xs">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-              <td class="px-4 py-4 text-xs">
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border
-                  {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
-                  {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
-                  {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
-                  {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
+            <tr class="fila-venta hover:bg-cc-card/60 transition {% if venta.estado == 'NO INGRESO' %}opacity-50{% endif %}"
+                data-estado="{{ venta.estado }}" data-texto="{{ (venta.nombre_cliente ~ ' ' ~ venta.nro_doc ~ ' ' ~ venta.vendedor.username)|lower }}">
+              <td class="px-4 py-4 text-xs whitespace-nowrap">{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="px-4 py-4">{{ badge(venta.estado) }}</td>
+              <td class="px-4 py-4 font-medium text-cc-fg">{{ venta.vendedor.username }}</td>
+              <td class="px-4 py-4 max-w-[220px]">
+                <p class="truncate text-cc-fg">{{ venta.nombre_cliente }}</p>
+                <p class="text-[11px] text-cc-purplel mt-0.5">{{ ico_id() }}{{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
               </td>
-              <td class="px-4 py-4 font-medium text-white">{{ venta.vendedor.username }}</td>
-              <td class="px-4 py-4 max-w-[190px]">
-                <p class="truncate text-white">{{ venta.nombre_cliente }}</p>
-                <p class="text-[10px] text-cc-purplel mt-0.5">🪪 {{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
-              </td>
-              <td class="px-4 py-4 font-bold text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
+              <td class="px-4 py-4 font-bold text-cc-purplel text-right whitespace-nowrap">${{ "{:,.2f}".format(venta.monto_financiado) }}</td>
               <td class="px-4 py-4 text-xs">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
-                  <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Ver</a>
+                  <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple hover:text-white border border-cc-border text-cc-fg font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Ver</a>
                   {% if session.role == 'ADMIN' or venta.usuario_id == session.user_id %}
-                  <a href="/venta/{{ venta.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Editar</a>
+                  <a href="/venta/{{ venta.id }}/editar" class="bg-cc-purple/10 hover:bg-cc-purple hover:text-white border border-cc-purple/40 text-cc-purplel font-semibold py-1 px-3 rounded-lg whitespace-nowrap transition">Editar</a>
                   {% endif %}
                   {% if session.role == 'ADMIN' %}
                   <form action="/venta/{{ venta.id }}/estado" method="POST" class="inline">
-                    <select name="estado" onchange="this.form.submit()"
-                      class="bg-cc-card border border-cc-border rounded-lg text-white text-xs px-1 py-1 focus:outline-none focus:border-cc-purple">
+                    <select name="estado" aria-label="Cambiar estado" onchange="this.form.submit()"
+                      class="bg-cc-card border border-cc-border rounded-lg text-cc-fg text-xs px-1 py-1 focus:outline-none focus:border-cc-purple">
                       <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                       <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
                       <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
@@ -154,41 +226,38 @@
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="text-center py-6 text-xs text-cc-muted">No hay ventas registradas.</td></tr>
+            <tr><td colspan="6" class="text-center py-8 text-xs text-cc-muted">Aún no hay ventas registradas.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
 
-      <!-- Móvil cards ventas -->
+      <!-- Móvil -->
       <div class="sm:hidden divide-y divide-cc-border">
         {% for venta in ventas %}
-        <div class="p-4 space-y-3 {% if venta.estado == 'NO INGRESO' %}opacity-40{% endif %}">
+        <div class="fila-venta p-4 space-y-3 {% if venta.estado == 'NO INGRESO' %}opacity-50{% endif %}"
+             data-estado="{{ venta.estado }}" data-texto="{{ (venta.nombre_cliente ~ ' ' ~ venta.nro_doc ~ ' ' ~ venta.vendedor.username)|lower }}">
           <div class="flex justify-between items-start gap-2">
             <div class="min-w-0">
-              <p class="text-sm font-bold text-white truncate">{{ venta.nombre_cliente }}</p>
-              <p class="text-[10px] text-cc-purplel">🪪 {{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
-              <p class="text-[10px] text-cc-muted">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
+              <p class="text-sm font-bold text-cc-fg truncate">{{ venta.nombre_cliente }}</p>
+              <p class="text-[11px] text-cc-purplel">{{ ico_id() }}{{ venta.tipo_doc }} {{ venta.nro_doc }}</p>
+              <p class="text-[11px] text-cc-muted">{{ venta.vendedor.username }} · {{ venta.fecha.strftime('%d/%m/%Y') }}</p>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap
-              {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
-              {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
-                  {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
-              {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
+            {{ badge(venta.estado) }}
           </div>
           <p class="text-lg font-black text-cc-purplel">${{ "{:,.2f}".format(venta.monto_financiado) }}</p>
           <div class="flex gap-2 flex-wrap">
-            <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white font-semibold py-2 px-4 rounded-lg text-xs transition">Ver adjuntos</a>
+            <a href="/venta/{{ venta.id }}" class="bg-cc-elevated hover:bg-cc-purple hover:text-white border border-cc-border text-cc-fg font-semibold py-2 px-4 rounded-lg text-xs transition">Ver adjuntos</a>
             {% if session.role == 'ADMIN' or venta.usuario_id == session.user_id %}
-            <a href="/venta/{{ venta.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-2 px-4 rounded-lg text-xs transition">Editar</a>
+            <a href="/venta/{{ venta.id }}/editar" class="bg-cc-purple/10 hover:bg-cc-purple hover:text-white border border-cc-purple/40 text-cc-purplel font-semibold py-2 px-4 rounded-lg text-xs transition">Editar</a>
             {% endif %}
             {% if session.role == 'ADMIN' %}
             <form action="/venta/{{ venta.id }}/estado" method="POST" class="flex-1 min-w-0">
-              <select name="estado" onchange="this.form.submit()"
-                class="w-full bg-cc-card border border-cc-border rounded-lg text-white text-xs px-2 py-2 focus:outline-none focus:border-cc-purple">
+              <select name="estado" aria-label="Cambiar estado" onchange="this.form.submit()"
+                class="w-full bg-cc-card border border-cc-border rounded-lg text-cc-fg text-xs px-2 py-2 focus:outline-none focus:border-cc-purple">
                 <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                 <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
-                      <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
+                <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
                 <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
               </select>
             </form>
@@ -199,10 +268,11 @@
           </div>
         </div>
         {% else %}
-        <p class="text-center py-6 text-xs text-cc-muted">No hay ventas registradas.</p>
+        <p class="text-center py-8 text-xs text-cc-muted">Aún no hay ventas registradas.</p>
         {% endfor %}
       </div>
-    </div>
+      <p id="sinResultados" class="hidden text-center py-8 text-xs text-cc-muted">Ninguna venta coincide con la búsqueda.</p>
+    </section>
 
     <!-- PAGOS -->
     <div class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
@@ -212,7 +282,7 @@
 
       <!-- Escritorio -->
       <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-300">
+        <table class="w-full text-left text-sm text-cc-fg/80">
           <thead class="bg-cc-card/60 text-[11px] uppercase text-cc-muted border-b border-cc-border tracking-wider">
             <tr>
               <th class="px-6 py-3">Fecha de Emisión</th>
@@ -227,11 +297,11 @@
             {% for pago in pagos %}
             <tr class="hover:bg-cc-card/60 transition">
               <td class="px-6 py-4 text-xs">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-              <td class="px-6 py-4 font-medium text-white">{{ pago.vendedor.username }}</td>
+              <td class="px-6 py-4 font-medium text-cc-fg">{{ pago.vendedor.username }}</td>
               <td class="px-6 py-4 text-xs">
                 {% if pago.venta %}
                   <a href="/venta/{{ pago.venta.id }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cc-purple/10 text-cc-purplel border border-cc-purple/30 hover:bg-cc-purple/20 transition max-w-[180px] truncate">
-                    🔗 {{ pago.venta.nombre_cliente }}
+                    {{ ico_link() }}{{ pago.venta.nombre_cliente }}
                   </a>
                 {% else %}
                   <span class="text-cc-muted">—</span>
@@ -241,7 +311,7 @@
               <td class="px-6 py-4 text-right font-bold text-cc-purplel">${{ "{:,.2f}".format(pago.monto) }}</td>
               <td class="px-6 py-4 text-xs">
                 <div class="flex items-center justify-center gap-2">
-                  <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-1 px-3 rounded-lg font-semibold transition">Ver Recibo</a>
+                  <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-fg py-1 px-3 rounded-lg font-semibold transition">Ver Recibo</a>
                   {% if session.role == 'ADMIN' %}
                   <a href="/pago/{{ pago.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-1 px-3 rounded-lg transition">Editar</a>
                   <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Seguro que deseas revertir este pago?')" class="inline">
@@ -264,17 +334,17 @@
         <div class="p-4 space-y-2">
           <div class="flex justify-between items-start gap-2">
             <div class="min-w-0">
-              <p class="text-sm font-bold text-white">{{ pago.vendedor.username }}</p>
-              <p class="text-[10px] text-cc-muted">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+              <p class="text-sm font-bold text-cc-fg">{{ pago.vendedor.username }}</p>
+              <p class="text-[11px] text-cc-muted">{{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
               {% if pago.venta %}
-              <a href="/venta/{{ pago.venta.id }}" class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-cc-purple/10 text-cc-purplel border border-cc-purple/30 truncate max-w-full">🔗 {{ pago.venta.nombre_cliente }}</a>
+              <a href="/venta/{{ pago.venta.id }}" class="inline-block mt-1 text-[11px] px-2 py-0.5 rounded-full bg-cc-purple/10 text-cc-purplel border border-cc-purple/30 truncate max-w-full">{{ ico_link() }}{{ pago.venta.nombre_cliente }}</a>
               {% endif %}
-              <p class="text-[10px] text-cc-muted mt-1 truncate">{{ pago.observaciones or 'Sin observaciones.' }}</p>
+              <p class="text-[11px] text-cc-muted mt-1 truncate">{{ pago.observaciones or 'Sin observaciones.' }}</p>
             </div>
             <p class="text-lg font-black text-cc-purplel whitespace-nowrap">${{ "{:,.2f}".format(pago.monto) }}</p>
           </div>
           <div class="flex gap-2">
-            <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-white py-2 px-4 rounded-lg font-semibold text-xs transition">Ver Recibo</a>
+            <a href="/pago/{{ pago.id }}" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-fg py-2 px-4 rounded-lg font-semibold text-xs transition">Ver Recibo</a>
             {% if session.role == 'ADMIN' %}
             <a href="/pago/{{ pago.id }}/editar" class="bg-cc-elevated hover:bg-cc-purple border border-cc-border text-cc-purplel font-semibold py-2 px-4 rounded-lg text-xs transition">Editar</a>
             <form action="/pago/{{ pago.id }}/eliminar" method="POST" onsubmit="return confirm('¿Revertir este pago?')">
@@ -284,13 +354,111 @@
           </div>
         </div>
         {% else %}
-        <p class="text-center py-6 text-xs text-cc-muted">No se registran movimientos ni abonos liquidados.</p>
+        <p class="text-center py-8 text-xs text-cc-muted">No se registran movimientos ni abonos liquidados.</p>
         {% endfor %}
       </div>
     </div>
 
   </main>
 
-  <footer class="text-center text-[10px] text-cc-muted py-4 border-t border-cc-border">© CELUCAST · Panel ejecutivo de ventas</footer>
+  <footer class="text-center text-[11px] text-cc-muted py-4 border-t border-cc-border">© CELUCAST · Panel ejecutivo de ventas</footer>
+  <style>
+    .chip[aria-pressed="true"] { background: rgb(var(--cc-purple)); border-color: rgb(var(--cc-purple)); color: #fff; }
+    details > summary::-webkit-details-marker { display: none; }
+  </style>
+  <script>
+    const STATS = {{ stats|tojson }};
+    const ES_ADMIN = {{ 'true' if session.role == 'ADMIN' else 'false' }};
+
+    const token = n => 'rgb(' + getComputedStyle(document.documentElement).getPropertyValue('--cc-' + n).trim().split(' ').join(',') + ')';
+    const alpha = (n, a) => 'rgba(' + getComputedStyle(document.documentElement).getPropertyValue('--cc-' + n).trim().split(' ').join(',') + ',' + a + ')';
+    const compacto = new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 });
+    const pesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+
+    const COLORES_ESTADO = { 'PENDIENTE': '#f59e0b', 'REVISADO': '#10b981', 'VENTA PAGA': '#c026d3', 'NO INGRESO': '#ef4444' };
+    const charts = [];
+
+    function baseOpts() {
+      Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+      Chart.defaults.font.size = 11;
+      Chart.defaults.color = token('muted');
+      return { responsive: true, maintainAspectRatio: false, animation: { duration: 600, easing: 'easeOutQuart' } };
+    }
+
+    function dibujar() {
+      charts.splice(0).forEach(c => c.destroy());
+      const base = baseOpts();
+      const grid = { color: alpha('border', .7), drawTicks: false };
+      const maxMonto = Math.max.apply(null, STATS.montos);
+      const colorBarra = STATS.montos.map(m => (m === maxMonto && m > 0) ? token('purple') : alpha('purple', .45));
+
+      charts.push(new Chart(document.getElementById('chartMeses'), {
+        type: 'bar',
+        data: { labels: STATS.labels, datasets: [{ data: STATS.montos, backgroundColor: colorBarra, borderRadius: 6, maxBarThickness: 36 }] },
+        options: Object.assign({}, base, {
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pesos.format(c.parsed.y) + ' · ' + STATS.cantidades[c.dataIndex] + ' ventas' } } },
+          scales: { x: { grid: { display: false }, border: { display: false } },
+                    y: { beginAtZero: true, grid: grid, border: { display: false }, ticks: { callback: v => '$' + compacto.format(v), padding: 8 } } }
+        })
+      }));
+
+      const estados = Object.keys(STATS.estados);
+      charts.push(new Chart(document.getElementById('chartEstados'), {
+        type: 'doughnut',
+        data: { labels: estados, datasets: [{ data: estados.map(e => STATS.estados[e]), backgroundColor: estados.map(e => COLORES_ESTADO[e] || '#94a3b8'), borderColor: token('surface'), borderWidth: 3 }] },
+        options: Object.assign({}, base, { cutout: '66%', plugins: { legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 12 } } } })
+      }));
+
+      if (ES_ADMIN) {
+        charts.push(new Chart(document.getElementById('chartSecundaria'), {
+          type: 'bar',
+          data: { labels: STATS.asesores.labels, datasets: [{ data: STATS.asesores.montos, backgroundColor: token('purple'), borderRadius: 6, maxBarThickness: 22 }] },
+          options: Object.assign({}, base, { indexAxis: 'y',
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pesos.format(c.parsed.x) } } },
+            scales: { x: { beginAtZero: true, grid: grid, border: { display: false }, ticks: { callback: v => '$' + compacto.format(v) } }, y: { grid: { display: false }, border: { display: false } } } })
+        }));
+      } else {
+        charts.push(new Chart(document.getElementById('chartSecundaria'), {
+          type: 'line',
+          data: { labels: STATS.labels, datasets: [{ data: STATS.cantidades, borderColor: token('purple'), backgroundColor: alpha('purple', .15), fill: true, tension: .35, pointRadius: 3, pointBackgroundColor: token('purple') }] },
+          options: Object.assign({}, base, { plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, grid: grid, border: { display: false }, ticks: { precision: 0 } } } })
+        }));
+      }
+    }
+    dibujar();
+    // Redibuja cuando se cambia entre modo claro y oscuro.
+    new MutationObserver(dibujar).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Buscador y filtros por estado
+    (function () {
+      const filas = Array.from(document.querySelectorAll('.fila-venta'));
+      const caja = document.getElementById('buscarVenta');
+      const chips = Array.from(document.querySelectorAll('#chipsEstado .chip'));
+      const contador = document.getElementById('contadorVentas');
+      const vacio = document.getElementById('sinResultados');
+      let estado = '';
+      function aplicar() {
+        const q = caja.value.trim().toLowerCase();
+        let n = 0;
+        filas.forEach(f => {
+          const ok = (!estado || f.dataset.estado === estado) && (!q || f.dataset.texto.indexOf(q) !== -1);
+          f.style.display = ok ? '' : 'none';
+          if (ok && f.tagName === 'TR') n++;
+        });
+        if (!filas.some(f => f.tagName === 'TR')) n = filas.filter(f => f.style.display !== 'none').length;
+        contador.textContent = '· ' + n;
+        vacio.classList.toggle('hidden', n > 0 || !filas.length);
+      }
+      chips.forEach(c => c.addEventListener('click', () => {
+        estado = c.dataset.estado;
+        chips.forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false'));
+        aplicar();
+      }));
+      caja.addEventListener('input', aplicar);
+      aplicar();
+    })();
+  </script>
+  {% include '_theme_toggle.html' %}
 </body>
 </html>

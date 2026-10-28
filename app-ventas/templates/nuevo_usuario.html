@@ -4,25 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CELUCAST · Nuevo Usuario</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
-      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
-    } } }
-  </script>
-  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
+  {% include '_head.html' %}
 </head>
-<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col justify-center items-center px-4 py-8">
+<body class="bg-cc-bg text-cc-fg min-h-screen flex flex-col justify-center items-center px-4 py-8">
   <div class="max-w-sm w-full bg-cc-surface border border-cc-border rounded-2xl shadow-2xl overflow-hidden">
     <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
     <div class="p-6 space-y-5">
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-2">
           <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white text-sm">C</div>
-          <h2 class="text-sm font-bold text-white">Crear Nuevo Acceso</h2>
+          <h2 class="text-sm font-bold text-cc-fg">Crear Nuevo Acceso</h2>
         </div>
         <a href="/dashboard" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
       </div>
@@ -35,18 +26,18 @@
 
       <form method="POST" class="space-y-4">
         <div>
-          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Usuario</label>
+          <label class="block text-[11px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Usuario</label>
           <input type="text" name="username" required
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
         </div>
         <div>
-          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Contraseña</label>
+          <label class="block text-[11px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Contraseña</label>
           <input type="password" name="password" required
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
         </div>
         <div>
-          <label class="block text-[10px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Rol Operativo</label>
-          <select name="role" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+          <label class="block text-[11px] font-semibold text-cc-purplel uppercase tracking-widest mb-1">Rol Operativo</label>
+          <select name="role" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
             <option value="VENDEDOR">Vendedor</option>
             <option value="ADMIN">Administrador</option>
           </select>
@@ -58,5 +49,6 @@
       </form>
     </div>
   </div>
+  {% include '_theme_toggle.html' %}
 </body>
 </html>

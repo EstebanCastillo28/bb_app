@@ -4,25 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CELUCAST · Comprobante</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
-      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
-    } } }
-  </script>
-  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
+  {% include '_head.html' %}
 </head>
-<body class="bg-cc-bg text-slate-100 min-h-screen flex flex-col items-center justify-start px-4 py-6">
+<body class="bg-cc-bg text-cc-fg min-h-screen flex flex-col items-center justify-start px-4 py-6">
   <div class="max-w-xl w-full bg-cc-surface border border-cc-border rounded-2xl shadow-2xl overflow-hidden">
     <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
     <div class="bg-cc-card px-4 py-4 border-b border-cc-border flex justify-between items-start gap-3">
       <div>
-        <h2 class="text-sm font-bold text-white">Comprobante Digital de Abono</h2>
-        <p class="text-[10px] text-cc-muted mt-0.5">
-          Asignado a <strong class="text-white">{{ pago.vendedor.username }}</strong>
+        <h2 class="text-sm font-bold text-cc-fg">Comprobante Digital de Abono</h2>
+        <p class="text-[11px] text-cc-muted mt-0.5">
+          Asignado a <strong class="text-cc-fg">{{ pago.vendedor.username }}</strong>
           &nbsp;·&nbsp; {{ pago.fecha.strftime('%d/%m/%Y %H:%M') }}
         </p>
       </div>
@@ -30,7 +21,7 @@
         {% if session.role == 'ADMIN' %}
         <a href="/pago/{{ pago.id }}/editar" class="text-xs bg-cc-purple/20 border border-cc-purple/40 px-3 py-2 rounded-lg text-cc-purplel hover:bg-cc-purple/30 whitespace-nowrap transition">✏️ Editar</a>
         {% endif %}
-        <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-slate-300 hover:text-white whitespace-nowrap transition">← Volver</a>
+        <a href="/dashboard" class="text-xs bg-cc-elevated border border-cc-border px-3 py-2 rounded-lg text-cc-fg/80 hover:text-white whitespace-nowrap transition">← Volver</a>
       </div>
     </div>
     <div class="p-4 sm:p-6 space-y-4">
@@ -41,18 +32,18 @@
         </div>
         <div>
           <p class="text-cc-muted font-semibold tracking-widest uppercase">Concepto o Detalle</p>
-          <p class="text-sm text-white mt-1 break-words">{{ pago.observaciones or 'Sin observaciones adicionales.' }}</p>
+          <p class="text-sm text-cc-fg mt-1 break-words">{{ pago.observaciones or 'Sin observaciones adicionales.' }}</p>
         </div>
       </div>
 
       <!-- Venta enlazada -->
       <div class="bg-cc-bg border border-cc-border p-4 rounded-xl">
-        <p class="text-[10px] text-cc-purplel font-semibold tracking-widest uppercase mb-2">Venta Enlazada</p>
+        <p class="text-[11px] text-cc-purplel font-semibold tracking-widest uppercase mb-2">Venta Enlazada</p>
         {% if pago.venta %}
           <a href="/venta/{{ pago.venta.id }}" class="flex items-center justify-between gap-3 bg-cc-purple/10 border border-cc-purple/30 hover:bg-cc-purple/20 rounded-lg p-3 transition">
             <div class="min-w-0">
-              <p class="text-sm font-bold text-white truncate">🔗 {{ pago.venta.nombre_cliente }}</p>
-              <p class="text-[10px] text-cc-muted">{{ pago.venta.producto_financiado }} · {{ pago.venta.fecha.strftime('%d/%m/%Y') }}</p>
+              <p class="text-sm font-bold text-cc-fg truncate">🔗 {{ pago.venta.nombre_cliente }}</p>
+              <p class="text-[11px] text-cc-muted">{{ pago.venta.producto_financiado }} · {{ pago.venta.fecha.strftime('%d/%m/%Y') }}</p>
             </div>
             <span class="text-xs text-cc-purplel font-bold whitespace-nowrap">${{ "{:,.2f}".format(pago.venta.monto_financiado) }}</span>
           </a>
@@ -79,5 +70,6 @@
       </div>
     </div>
   </div>
+  {% include '_theme_toggle.html' %}
 </body>
 </html>

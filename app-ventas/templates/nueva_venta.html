@@ -4,22 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CELUCAST · Nueva Venta</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: { cc: { bg:'#0A0711', surface:'#130E1F', card:'#1A1330', elevated:'#241A3D', border:'#33284D', purple:'#7C3AED', purpled:'#5B21B6', purplel:'#A78BFA', muted:'#9A8CB5' } },
-      fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
-    } } }
-  </script>
-  <style>body{font-family:'Inter',system-ui,sans-serif}</style>
+  {% include '_head.html' %}
 </head>
-<body class="bg-cc-bg text-slate-100 pb-24">
+<body class="bg-cc-bg text-cc-fg pb-24">
   <div class="sticky top-0 z-10 bg-cc-surface/90 backdrop-blur border-b border-cc-border px-4 py-3 flex justify-between items-center shadow-lg">
     <div class="flex items-center gap-2">
       <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white text-sm">C</div>
-      <h2 class="text-sm font-bold text-white">Registro de Venta</h2>
+      <h2 class="text-sm font-bold text-cc-fg">Registro de Venta</h2>
     </div>
     <a href="/dashboard" class="text-xs text-cc-muted hover:text-white py-1 px-2 transition">← Volver</a>
   </div>
@@ -36,47 +27,47 @@
           <span class="h-2 w-2 rounded-full bg-cc-purple"></span> Información del Cliente
         </h3>
         <div>
-          <label class="block text-[10px] text-cc-muted mb-1">Nombre Completo *</label>
+          <label class="block text-[11px] text-cc-muted mb-1">Nombre Completo *</label>
           <input type="text" name="nombre_cliente" required value="{{ datos.get('nombre_cliente','') }}"
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Tipo Doc</label>
-            <select name="tipo_doc" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            <label class="block text-[11px] text-cc-muted mb-1">Tipo Doc</label>
+            <select name="tipo_doc" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
               {% for t in ['C.C.', 'C.E.', 'NIT'] %}
                 <option value="{{ t }}" {% if datos.get('tipo_doc') == t %}selected{% endif %}>{{ t }}</option>
               {% endfor %}
             </select>
           </div>
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Número Documento *</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Número Documento *</label>
             <input type="text" name="nro_doc" required value="{{ datos.get('nro_doc','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Correo</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Correo</label>
             <input type="email" name="correo" value="{{ datos.get('correo','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Teléfono</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Teléfono</label>
             <input type="tel" name="telefono" value="{{ datos.get('telefono','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Ciudad</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Ciudad</label>
             <input type="text" name="ciudad" value="{{ datos.get('ciudad','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Dirección Completa</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Dirección Completa</label>
             <input type="text" name="direccion" value="{{ datos.get('direccion','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
         </div>
       </div>
@@ -87,25 +78,25 @@
         </h3>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Monto Financiado *</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Monto Financiado *</label>
             <input type="number" step="0.01" name="monto_financiado" required value="{{ datos.get('monto_financiado','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
           <div>
-            <label class="block text-[10px] text-cc-muted mb-1">Número de Cuotas *</label>
+            <label class="block text-[11px] text-cc-muted mb-1">Número de Cuotas *</label>
             <input type="number" name="cantidad_cuotas" required value="{{ datos.get('cantidad_cuotas','') }}"
-              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+              class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
           </div>
         </div>
         <div>
-          <label class="block text-[10px] text-cc-muted mb-1">Producto Adquirido *</label>
+          <label class="block text-[11px] text-cc-muted mb-1">Producto Adquirido *</label>
           <input type="text" name="producto_financiado" required value="{{ datos.get('producto_financiado','') }}"
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
         </div>
         <div>
-          <label class="block text-[10px] text-cc-muted mb-1">Observaciones</label>
+          <label class="block text-[11px] text-cc-muted mb-1">Observaciones</label>
           <textarea name="observaciones" rows="3"
-            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-white focus:outline-none focus:border-cc-purple">{{ datos.get('observaciones','') }}</textarea>
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">{{ datos.get('observaciones','') }}</textarea>
         </div>
       </div>
 
@@ -123,7 +114,7 @@
           ] %}
           {% for name, label in archivos %}
           <div class="bg-cc-card border border-cc-border rounded-lg p-3">
-            <label class="block text-[10px] text-cc-muted mb-2">{{ label }}</label>
+            <label class="block text-[11px] text-cc-muted mb-2">{{ label }}</label>
             <input type="file" name="{{ name }}" accept="image/*,application/pdf" class="w-full text-cc-muted text-xs file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-cc-purple file:text-white file:text-xs file:font-semibold">
           </div>
           {% endfor %}
@@ -139,63 +130,7 @@
     </form>
   </div>
 
-  <script>
-    // Comprime imágenes en el navegador para no superar el límite de 4.5 MB de Vercel.
-    async function comprimirImagen(file, maxLado = 1600, calidad = 0.7) {
-      if (!file.type || !file.type.startsWith('image/')) return file; // PDFs u otros: sin cambios
-      try {
-        const dataUrl = await new Promise((res, rej) => {
-          const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file);
-        });
-        const img = await new Promise((res, rej) => {
-          const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl;
-        });
-        let w = img.width, h = img.height;
-        if (w > maxLado || h > maxLado) {
-          if (w >= h) { h = Math.round(h * maxLado / w); w = maxLado; }
-          else { w = Math.round(w * maxLado / h); h = maxLado; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', calidad));
-        if (!blob || blob.size >= file.size) return file; // si no mejora, deja el original
-        return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
-      } catch (e) { return file; }
-    }
-
-    (function () {
-      const form = document.querySelector('form');
-      if (!form) return;
-      let listo = false;
-      form.addEventListener('submit', async function (e) {
-        if (listo) return; // ya se comprimió: dejar enviar
-        e.preventDefault();
-        const boton = form.querySelector('button[type=submit]');
-        const txt = boton ? boton.textContent : '';
-        if (boton) { boton.disabled = true; boton.textContent = 'Optimizando archivos...'; }
-        try {
-          let total = 0;
-          for (const input of form.querySelectorAll('input[type=file]')) {
-            if (!input.files.length) continue;
-            const dt = new DataTransfer();
-            for (const f of input.files) { const c = await comprimirImagen(f); dt.items.add(c); total += c.size; }
-            input.files = dt.files;
-          }
-          if (total > 4.3 * 1024 * 1024) {
-            alert('Los archivos siguen pesando ' + (total / 1048576).toFixed(1) +
-                  ' MB (máximo ~4.3 MB). Sube menos archivos o evita PDF muy pesados (mejor una foto).');
-            if (boton) { boton.disabled = false; boton.textContent = txt; }
-            return;
-          }
-          listo = true;
-          form.submit();
-        } catch (err) {
-          if (boton) { boton.disabled = false; boton.textContent = txt; }
-          form.submit(); // ante cualquier fallo, intentar el envío normal
-        }
-      });
-    })();
-  </script>
+  {% include '_upload_script.html' %}
+  {% include '_theme_toggle.html' %}
 </body>
 </html>

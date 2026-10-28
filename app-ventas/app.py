@@ -154,6 +154,15 @@ CAMPOS_EDITABLES = [
 ]
 
 
+SOPORTES = [
+    ("foto_documento",        "Foto Documento Cliente"),
+    ("acta_entrega",          "Acta de Entrega Firmada"),
+    ("foto_cliente_producto", "Foto del Cliente con el Producto"),
+    ("captura_aprobacion",    "Captura Aprobación Crédito"),
+    ("anexos_adicionales",    "Anexos Adicionales"),
+]
+
+
 def buscar_venta_duplicada(nro_doc, monto, excluir_id=None):
     """Devuelve una venta duplicada, o None. Duplicado = MISMA cédula (nro_doc)
     Y MISMO monto financiado. Así un mismo cliente puede tener varias ventas
@@ -215,7 +224,74 @@ def dashboard():
     return render_template("dashboard.html",
                            ventas=ventas, pagos=pagos,
                            total_subido=total_subido, total_pagado=total_pagado,
-                           vendedores=vendedores, filtro_vendedor=filtro_vendedor)
+                           vendedores=vendedores, filtro_vendedor=filtro_vendedor,
+                           stats=calcular_estadisticas(ventas))
+
+
+MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+
+def calcular_estadisticas(ventas, meses=12):
+    """Resumen para las gráficas del panel. Las ventas 'NO INGRESO' no cuentan."""
+    validas = [v for v in ventas if v.estado != "NO INGRESO"]
+    hoy = datetime.utcnow()
+
+    # Ventana de los últimos `meses` meses, terminando en el mes actual.
+    claves = []
+    y, m = hoy.year, hoy.month
+    for _ in range(meses):
+        claves.append((y, m))
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    claves.reverse()
+    monto_mes = {k: 0.0 for k in claves}
+    cant_mes  = {k: 0 for k in claves}
+    for v in validas:
+        k = (v.fecha.year, v.fecha.month)
+        if k in monto_mes:
+            monto_mes[k] += v.monto_financiado
+            cant_mes[k]  += 1
+
+    etiquetas = [f"{MESES_ES[m - 1]} {str(y)[2:]}" for y, m in claves]
+    montos    = [round(monto_mes[k], 2) for k in claves]
+    cantidades = [cant_mes[k] for k in claves]
+
+    actual, anterior = claves[-1], claves[-2]
+    monto_actual, monto_prev = monto_mes[actual], monto_mes[anterior]
+    variacion = None
+    if monto_prev > 0:
+        variacion = round((monto_actual - monto_prev) / monto_prev * 100, 1)
+
+    mejor_i = max(range(len(montos)), key=lambda i: montos[i]) if any(montos) else None
+
+    estados = {}
+    for v in ventas:
+        estados[v.estado] = estados.get(v.estado, 0) + 1
+
+    asesores = {}
+    for v in validas:
+        asesores[v.vendedor.username] = asesores.get(v.vendedor.username, 0.0) + v.monto_financiado
+    top_asesores = sorted(asesores.items(), key=lambda kv: kv[1], reverse=True)[:6]
+
+    pagadas = estados.get("VENTA PAGA", 0)
+    return {
+        "labels": etiquetas,
+        "montos": montos,
+        "cantidades": cantidades,
+        "mejor_mes": etiquetas[mejor_i] if mejor_i is not None else None,
+        "mejor_monto": montos[mejor_i] if mejor_i is not None else 0,
+        "ranking_meses": sorted(
+            [{"mes": etiquetas[i], "monto": montos[i], "n": cantidades[i]} for i in range(len(montos)) if montos[i] > 0],
+            key=lambda r: r["monto"], reverse=True)[:5],
+        "ventas_mes": cant_mes[actual],
+        "monto_mes": monto_actual,
+        "variacion": variacion,
+        "ticket": (sum(v.monto_financiado for v in validas) / len(validas)) if validas else 0,
+        "tasa_pago": round(pagadas / len(validas) * 100) if validas else 0,
+        "estados": estados,
+        "asesores": {"labels": [a for a, _ in top_asesores], "montos": [round(t, 2) for _, t in top_asesores]},
+    }
 
 
 @app.route("/venta/nueva", methods=["GET", "POST"])
@@ -320,6 +396,19 @@ def editar_venta(id):
                         valor_nuevo    = "" if nuevo is None else str(nuevo),
                     ))
                     setattr(venta, campo, nuevo)
+                    n_cambios += 1
+            # Soportes: solo se reemplazan los que se suben de nuevo; el resto se conserva.
+            for campo, etiqueta in SOPORTES:
+                nuevo_archivo = procesar_archivo(campo)
+                if nuevo_archivo:
+                    db.session.add(CambioVenta(
+                        venta_id       = venta.id,
+                        usuario_id     = session["user_id"],
+                        campo          = etiqueta,
+                        valor_anterior = "(archivo anterior)" if getattr(venta, campo) else "(sin archivo)",
+                        valor_nuevo    = "(archivo nuevo)",
+                    ))
+                    setattr(venta, campo, nuevo_archivo)
                     n_cambios += 1
             db.session.commit()
             flash(f"Venta actualizada. {n_cambios} campo(s) modificado(s)." if n_cambios
