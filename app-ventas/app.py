@@ -455,7 +455,7 @@ def cambiar_estado(id):
         return redirect(url_for("login"))
     venta = Venta.query.get_or_404(id)
     nuevo_estado = request.form.get("estado")
-    if nuevo_estado in ["PENDIENTE", "REVISADO", "VENTA PAGA", "NO INGRESO"]:
+    if nuevo_estado in ["PENDIENTE", "REVISADO", "VENTA PAGA", "PROBLEMA DOCUMENTACION", "NO INGRESO"]:
         venta.estado = nuevo_estado
         db.session.commit()
         flash(f"Estado actualizado a {nuevo_estado}.", "success")

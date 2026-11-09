@@ -12,6 +12,7 @@
   {% if estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
   {% elif estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
   {% elif estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
+  {% elif estado == 'PROBLEMA DOCUMENTACION' %}bg-orange-500/10 text-orange-300 border-orange-500/40
   {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ estado }}</span>
 {%- endmacro %}
 {% macro ico_id() -%}<svg class="inline-block -mt-0.5 mr-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16c.5-1.5 5.5-1.5 6 0"/></svg>{%- endmacro %}
@@ -168,7 +169,7 @@
       </div>
 
       <div id="chipsEstado" class="px-4 py-3 border-b border-cc-border flex gap-2 overflow-x-auto">
-        {% set chips = [('', 'Todas'), ('PENDIENTE', 'Pendiente'), ('REVISADO', 'Revisado'), ('VENTA PAGA', 'Venta paga'), ('NO INGRESO', 'No ingreso')] %}
+        {% set chips = [('', 'Todas'), ('PENDIENTE', 'Pendiente'), ('REVISADO', 'Revisado'), ('VENTA PAGA', 'Venta paga'), ('PROBLEMA DOCUMENTACION', 'Problema documentación'), ('NO INGRESO', 'No ingreso')] %}
         {% for val, lbl in chips %}
         <button type="button" data-estado="{{ val }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"
           class="chip whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-full border border-cc-border text-cc-muted hover:text-cc-fg transition">
@@ -215,6 +216,7 @@
                       <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                       <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
                       <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
+                      <option value="PROBLEMA DOCUMENTACION" {% if venta.estado=='PROBLEMA DOCUMENTACION' %}selected{% endif %}>Problema Documentación</option>
                       <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
                     </select>
                   </form>
@@ -258,6 +260,7 @@
                 <option value="PENDIENTE" {% if venta.estado=='PENDIENTE' %}selected{% endif %}>Pendiente</option>
                 <option value="REVISADO"  {% if venta.estado=='REVISADO'  %}selected{% endif %}>Revisado</option>
                 <option value="VENTA PAGA"{% if venta.estado=='VENTA PAGA'%}selected{% endif %}>Venta Paga</option>
+                <option value="PROBLEMA DOCUMENTACION" {% if venta.estado=='PROBLEMA DOCUMENTACION' %}selected{% endif %}>Problema Documentación</option>
                 <option value="NO INGRESO"{% if venta.estado=='NO INGRESO'%}selected{% endif %}>No Ingreso</option>
               </select>
             </form>
@@ -375,7 +378,7 @@
     const compacto = new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 });
     const pesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
-    const COLORES_ESTADO = { 'PENDIENTE': '#f59e0b', 'REVISADO': '#10b981', 'VENTA PAGA': '#c026d3', 'NO INGRESO': '#ef4444' };
+    const COLORES_ESTADO = { 'PENDIENTE': '#f59e0b', 'REVISADO': '#10b981', 'VENTA PAGA': '#c026d3', 'PROBLEMA DOCUMENTACION': '#ea580c', 'NO INGRESO': '#ef4444' };
     const charts = [];
 
     function baseOpts() {

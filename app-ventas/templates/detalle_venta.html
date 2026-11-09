@@ -63,6 +63,7 @@
             {% if venta.estado == 'PENDIENTE' %}bg-amber-500/10 text-amber-300 border-amber-500/30
             {% elif venta.estado == 'REVISADO' %}bg-emerald-500/10 text-emerald-300 border-emerald-500/30
             {% elif venta.estado == 'VENTA PAGA' %}bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/40
+            {% elif venta.estado == 'PROBLEMA DOCUMENTACION' %}bg-orange-500/10 text-orange-300 border-orange-500/40
             {% else %}bg-red-500/10 text-red-300 border-red-500/30{% endif %}">{{ venta.estado }}</span>
         </div>
       </div>
