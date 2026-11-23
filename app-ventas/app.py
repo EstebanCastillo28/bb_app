@@ -617,6 +617,26 @@ def eliminar_usuario(id):
     return redirect(url_for("admin_usuarios"))
 
 
+@app.route("/admin/liquidador")
+def liquidador():
+    """Calculadora para saber cuánto se le paga a un aliado (vendedor) por sus ventas.
+    El cálculo se hace en el navegador; aquí solo se entregan los datos."""
+    if "user_id" not in session or session["role"] != "ADMIN":
+        return redirect(url_for("login"))
+    vendedores = Usuario.query.filter_by(role="VENDEDOR").order_by(Usuario.username).all()
+    ventas = Venta.query.filter(Venta.estado != "NO INGRESO").order_by(Venta.fecha.desc()).all()
+    datos = [{
+        "id": v.id,
+        "aliado": v.usuario_id,
+        "cliente": v.nombre_cliente,
+        "doc": f"{v.tipo_doc} {v.nro_doc}",
+        "fecha": v.fecha.strftime("%d/%m/%Y"),
+        "estado": v.estado,
+        "monto": v.monto_financiado,
+    } for v in ventas]
+    return render_template("liquidador.html", vendedores=vendedores, ventas=datos)
+
+
 @app.route("/admin/pago", methods=["GET", "POST"])
 def registrar_pago():
     if "user_id" not in session or session["role"] != "ADMIN":

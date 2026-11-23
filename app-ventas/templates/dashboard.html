@@ -32,6 +32,7 @@
       </div>
       <div class="flex gap-2 flex-shrink-0">
         {% if session.role == 'ADMIN' %}
+          <a href="/admin/liquidador" class="bg-cc-purple/10 hover:bg-cc-purple hover:text-white border border-cc-purple/40 text-cc-purplel text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition">Liquidador</a>
           <a href="/admin/usuarios" class="bg-cc-elevated hover:bg-cc-border text-xs font-semibold py-2 px-3 rounded-lg text-cc-fg whitespace-nowrap border border-cc-border transition">Usuarios</a>
           <a href="/admin/pago"    class="bg-gradient-to-r from-cc-purple to-fuchsia-600 hover:from-cc-purpled hover:to-fuchsia-700 text-xs font-semibold py-2 px-3 rounded-lg text-white whitespace-nowrap shadow shadow-cc-purple/30 transition">+ Pago</a>
         {% else %}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CELUCAST · Liquidador</title>
+  {% include '_head.html' %}
+</head>
+<body class="bg-cc-bg text-cc-fg min-h-screen flex flex-col">
+  <div class="h-1 bg-gradient-to-r from-cc-purpled via-cc-purple to-fuchsia-500"></div>
+
+  <header class="bg-cc-surface/90 backdrop-blur border-b border-cc-border py-3 px-4 sm:px-8 sticky top-0 z-20">
+    <div class="flex justify-between items-center gap-2 max-w-5xl mx-auto">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-cc-purple to-fuchsia-600 grid place-items-center font-black text-white shadow-lg shadow-cc-purple/30 flex-shrink-0">C</div>
+        <p class="text-sm font-black tracking-tight text-cc-fg truncate">Liquidador de aliados</p>
+      </div>
+      <a href="/dashboard" class="text-xs text-cc-muted hover:text-cc-fg py-2 px-2 transition">← Volver al panel</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 grid lg:grid-cols-5 gap-5 flex-grow items-start">
+
+    <!-- Parámetros + ventas -->
+    <section class="lg:col-span-3 space-y-5">
+      <div class="bg-cc-surface border border-cc-border rounded-xl p-4 space-y-4">
+        <h2 class="text-sm font-bold text-cc-fg">Parámetros</h2>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label for="aliado" class="block text-[11px] font-semibold text-cc-muted uppercase tracking-wider mb-1">Aliado</label>
+            <select id="aliado" class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
+              {% for v in vendedores %}<option value="{{ v.id }}">{{ v.username }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="porcentaje" class="block text-[11px] font-semibold text-cc-muted uppercase tracking-wider mb-1">% que se le descuenta</label>
+            <div class="relative">
+              <input id="porcentaje" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="0"
+                class="w-full bg-cc-card border border-cc-border rounded-lg p-3 pr-9 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-cc-muted" aria-hidden="true">%</span>
+            </div>
+          </div>
+        </div>
+        <label class="flex items-start gap-3 bg-cc-card border border-cc-border rounded-lg p-3 cursor-pointer">
+          <input id="gmf" type="checkbox" class="mt-0.5 h-4 w-4 accent-[rgb(var(--cc-purple))]">
+          <span class="text-sm">
+            <span class="font-semibold text-cc-fg">Descontar 4x1000</span>
+            <span class="block text-[11px] text-cc-muted mt-0.5">Se calcula sobre el valor que queda después del descuento (0,4 %).</span>
+          </span>
+        </label>
+        <div>
+          <label for="manual" class="block text-[11px] font-semibold text-cc-muted uppercase tracking-wider mb-1">Valor financiado adicional (opcional)</label>
+          <input id="manual" type="number" inputmode="decimal" min="0" step="1" placeholder="Para sumar un valor que no está en el sistema"
+            class="w-full bg-cc-card border border-cc-border rounded-lg p-3 text-sm text-cc-fg focus:outline-none focus:border-cc-purple">
+        </div>
+      </div>
+
+      <div class="bg-cc-surface border border-cc-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-cc-border flex items-center justify-between gap-3">
+          <h2 class="text-sm font-bold text-cc-fg">Ventas del aliado <span id="contador" class="text-xs font-medium text-cc-muted"></span></h2>
+          <label class="flex items-center gap-2 text-xs font-semibold text-cc-purplel cursor-pointer">
+            <input id="todas" type="checkbox" class="h-4 w-4 accent-[rgb(var(--cc-purple))]"> Sin pagar
+          </label>
+        </div>
+        <ul id="lista" class="divide-y divide-cc-border"></ul>
+        <p id="vacio" class="hidden text-center py-8 text-xs text-cc-muted">Este aliado no tiene ventas registradas.</p>
+      </div>
+    </section>
+
+    <!-- Resultado -->
+    <aside class="lg:col-span-2 lg:sticky lg:top-20 bg-cc-surface border border-cc-purple/40 rounded-xl p-5 space-y-4" aria-live="polite">
+      <h2 class="text-sm font-bold text-cc-fg">Liquidación</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between gap-3"><dt class="text-cc-muted">Valor financiado</dt><dd id="rFinanciado" class="font-semibold text-cc-fg">$0</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-cc-muted">Descuento (<span id="rPct">0</span> %)</dt><dd id="rDescuento" class="font-semibold text-red-300">-$0</dd></div>
+        <div class="flex justify-between gap-3 border-t border-cc-border pt-2"><dt class="text-cc-muted">Subtotal</dt><dd id="rSubtotal" class="font-semibold text-cc-fg">$0</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-cc-muted">4x1000</dt><dd id="rGmf" class="font-semibold text-red-300">-$0</dd></div>
+      </dl>
+      <div class="border-t border-cc-border pt-4">
+        <p class="text-[11px] font-semibold text-cc-purplel uppercase tracking-wider">Total a pagar al aliado</p>
+        <p id="rTotal" class="text-3xl font-black text-cc-purplel mt-1 break-words">$0</p>
+        <p id="rVentas" class="text-[11px] text-cc-muted mt-1">Ninguna venta seleccionada</p>
+      </div>
+      <button id="copiar" type="button" class="w-full bg-cc-elevated hover:bg-cc-border border border-cc-border text-cc-fg text-xs font-bold py-2.5 rounded-lg transition">Copiar resumen</button>
+    </aside>
+  </main>
+
+  <script>
+    const VENTAS = {{ ventas|tojson }};
+    const $ = id => document.getElementById(id);
+    const pesos = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+    const COLOR = { 'PENDIENTE': 'amber', 'REVISADO': 'emerald', 'VENTA PAGA': 'fuchsia', 'PROBLEMA DOCUMENTACION': 'orange' };
+    const seleccion = new Set();
+
+    try { const g = localStorage.getItem('cc-liq-pct'); if (g !== null) $('porcentaje').value = g; } catch (e) {}
+
+    function ventasDelAliado() { return VENTAS.filter(v => String(v.aliado) === $('aliado').value); }
+
+    function pintarLista() {
+      const lista = $('lista'); lista.innerHTML = '';
+      const vs = ventasDelAliado();
+      $('vacio').classList.toggle('hidden', vs.length > 0);
+      $('contador').textContent = vs.length ? '· ' + vs.length : '';
+      vs.forEach(v => {
+        const c = COLOR[v.estado] || 'red';
+        const li = document.createElement('li');
+        li.innerHTML = '<label class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-cc-card/60 transition">' +
+          '<input type="checkbox" class="h-4 w-4 flex-shrink-0 accent-[rgb(var(--cc-purple))]" data-id="' + v.id + '"' + (seleccion.has(v.id) ? ' checked' : '') + '>' +
+          '<span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-cc-fg truncate"></span>' +
+          '<span class="block text-[11px] text-cc-muted"></span></span>' +
+          '<span class="text-right flex-shrink-0"><span class="block text-sm font-bold text-cc-purplel"></span>' +
+          '<span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-' + c + '-500/10 text-' + c + '-300 border-' + c + '-500/30"></span></span></label>';
+        li.querySelector('.truncate').textContent = v.cliente;
+        li.querySelector('.text-cc-muted').textContent = v.doc + ' · ' + v.fecha;
+        li.querySelector('.text-cc-purplel').textContent = pesos(v.monto);
+        li.querySelector('.rounded-full').textContent = v.estado;
+        lista.appendChild(li);
+      });
+      $('todas').checked = false;
+    }
+
+    function calcular() {
+      const pct = Math.min(Math.max(parseFloat($('porcentaje').value) || 0, 0), 100);
+      const manual = Math.max(parseFloat($('manual').value) || 0, 0);
+      const elegidas = VENTAS.filter(v => seleccion.has(v.id) && String(v.aliado) === $('aliado').value);
+      const financiado = elegidas.reduce((s, v) => s + v.monto, 0) + manual;
+      const descuento = financiado * pct / 100;
+      const subtotal = financiado - descuento;
+      const gmf = $('gmf').checked ? subtotal * 0.004 : 0;
+      const total = subtotal - gmf;
+      $('rFinanciado').textContent = pesos(financiado);
+      $('rPct').textContent = String(pct).replace('.', ',');
+      $('rDescuento').textContent = '-' + pesos(descuento);
+      $('rSubtotal').textContent = pesos(subtotal);
+      $('rGmf').textContent = '-' + pesos(gmf);
+      $('rTotal').textContent = pesos(total);
+      const n = elegidas.length + (manual ? 1 : 0);
+      $('rVentas').textContent = n ? n + (n === 1 ? ' venta incluida' : ' ventas incluidas') : 'Ninguna venta seleccionada';
+      return { pct, financiado, descuento, subtotal, gmf, total, n };
+    }
+
+    $('lista').addEventListener('change', e => {
+      const id = Number(e.target.dataset.id);
+      if (!id) return;
+      e.target.checked ? seleccion.add(id) : seleccion.delete(id);
+      calcular();
+    });
+    $('todas').addEventListener('change', e => {
+      ventasDelAliado().forEach(v => { if (v.estado !== 'VENTA PAGA') e.target.checked ? seleccion.add(v.id) : seleccion.delete(v.id); });
+      $('lista').querySelectorAll('input[data-id]').forEach(i => {
+        const v = VENTAS.find(x => x.id === Number(i.dataset.id));
+        if (v.estado !== 'VENTA PAGA') i.checked = e.target.checked;
+      });
+      calcular();
+    });
+    $('aliado').addEventListener('change', () => { seleccion.clear(); pintarLista(); calcular(); });
+    $('porcentaje').addEventListener('input', () => { try { localStorage.setItem('cc-liq-pct', $('porcentaje').value); } catch (e) {} calcular(); });
+    ['gmf', 'manual'].forEach(id => $(id).addEventListener('input', calcular));
+    $('copiar').addEventListener('click', async () => {
+      const r = calcular();
+      const txt = 'Liquidación ' + $('aliado').selectedOptions[0].text + '\n' +
+        'Valor financiado: ' + pesos(r.financiado) + '\n' +
+        'Descuento ' + r.pct + '%: -' + pesos(r.descuento) + '\n' +
+        (r.gmf ? '4x1000: -' + pesos(r.gmf) + '\n' : '') +
+        'Total a pagar: ' + pesos(r.total);
+      try { await navigator.clipboard.writeText(txt); $('copiar').textContent = 'Copiado'; }
+      catch (e) { $('copiar').textContent = 'No se pudo copiar'; }
+      setTimeout(() => { $('copiar').textContent = 'Copiar resumen'; }, 1800);
+    });
+
+    pintarLista(); calcular();
+  </script>
+  {% include '_theme_toggle.html' %}
+</body>
+</html>
